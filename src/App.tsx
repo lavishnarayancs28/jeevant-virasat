@@ -1,0 +1,168 @@
+import { useEffect, useMemo, useState } from 'react'
+import { Link, Route, Routes, useLocation, useParams, useSearchParams } from 'react-router-dom'
+import { ArrowDownRight, ArrowLeft, ArrowRight, BookOpen, ChevronDown, Clock3, Filter, MapPin, Search, X } from 'lucide-react'
+import { Layout } from './components/Layout'
+import { MapView } from './components/MapView'
+import { TrailBuilder } from './components/TrailBuilder'
+import { useResource } from './lib/api'
+import { useFavorites } from './lib/favorites'
+import type { Artisan, HeritageLocation, SearchResults, Story, Trail } from '../shared/types'
+import { artisans, heritage, regions, sampleTrails, stories } from '../shared/data'
+import { ArrowLink, ArtisanCard, CTAButton, EmptyState, Eyebrow, FavoriteButton, HeritageCard, ImageFrame, JoinNotice, LoadingState, MatchNote, PageHero, SectionHeading, StatusNotice, StoryCard, Tag } from './components/Shared'
+import './styles.css'
+
+const categories = ['Architecture', 'Craft', 'Food', 'Folk Culture', 'Sacred Tradition', 'Local History', 'Festival', 'Community Practice']
+const emptySearch: SearchResults = { heritage: [], artisans: [], stories: [], regions: [] }
+
+function DataBanner({ error }: { error: string | null }) { return error ? <StatusNotice>API unavailable — showing the same local demonstration content so the prototype remains explorable.</StatusNotice> : null }
+
+function ScrollToTop() {
+  const { pathname } = useLocation()
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'auto' })
+  }, [pathname])
+  return null
+}
+
+function HomePage() {
+  const { toggle, has } = useFavorites()
+  const featured = heritage.slice(0, 3)
+  const artisanSet = artisans.slice(0, 4)
+  return <>
+    <section className="home-hero"><div className="hero-backdrop" /><div className="container hero-layout"><div className="hero-copy"><Eyebrow>Living heritage discovery · India</Eyebrow><h1>Explore the India<br /><em>tourists don't see.</em></h1><p>Discover living traditions, forgotten stories, local crafts, regional flavours and the people keeping India’s heritage alive.</p><div className="hero-actions"><CTAButton to="/heritage">Start exploring</CTAButton><Link className="text-link light" to="/map">Discover hidden heritage <ArrowDownRight size={17} /></Link></div></div><div className="hero-annotation"><span>01</span><p>Begin with<br /><strong>Kurukshetra</strong><br />Haryana</p><Link to="/map" aria-label="Open Kurukshetra map"><ArrowRight size={18} /></Link></div></div><div className="hero-scroll">Scroll to wander <ArrowDownRight size={16} /></div></section>
+    <section className="intro-section container"><div className="intro-mark">JV</div><div><Eyebrow>Why Jeevant Virasat?</Eyebrow><h2>Heritage is not only what survived.<br /><em>It is what is still being lived.</em></h2><p className="intro-lede">Mainstream tourism can point you to the landmark. We help you find the hands, kitchens, voices and everyday places that give a region its character.</p></div></section>
+    <section className="feature-section"><div className="container"><SectionHeading eyebrow="A different way to travel" title="Follow the living threads" body="Move from a place to the people and practices around it." /><div className="feature-grid">{[['01', 'Living traditions', 'Discover traditions that continue today.', 'heritage'], ['02', 'Local craft', 'Meet artisans and understand the work behind the object.', 'artisans'], ['03', 'Forgotten places', 'Find culturally meaningful places outside the standard itinerary.', 'map'], ['04', 'Regional flavours', 'Taste food traditions connected to local history.', 'stories']].map(([number, title, body, route]) => <Link to={`/${route}`} className="feature-card" key={title}><span>{number}</span><h3>{title}</h3><p>{body}</p><ArrowDownRight size={18} /></Link>)}</div></div></section>
+    <section className="container content-section"><SectionHeading eyebrow="Start close to the ground" title="Featured in Kurukshetra" body="A first look at the places and practices shaping our demonstration region." action={<ArrowLink to="/heritage?region=kurukshetra">See all heritage</ArrowLink>} /><div className="heritage-grid">{featured.map((item) => <HeritageCard key={item.id} item={item} favorite={{ active: has('heritage', item.id), onToggle: toggle }} />)}</div></section>
+    <section className="artisan-band"><div className="container"><SectionHeading eyebrow="People + craft + story" title="Meet the artisans" body="A profile is a beginning. The real connection is the work, the place and the time behind it." action={<ArrowLink to="/artisans">Meet more makers</ArrowLink>} /><div className="artisan-grid">{artisanSet.map((item) => <ArtisanCard key={item.id} item={item} favorite={{ active: has('artisan', item.id), onToggle: toggle }} />)}</div></div></section>
+    <section className="trail-promo container"><div className="trail-promo-copy"><Eyebrow>Make the route yours</Eyebrow><h2>Not a checklist.<br /><em>A day with a point of view.</em></h2><p>Tell us what you want to notice, how long you have and how you want the day to feel. The recommendation service builds a considered route from the heritage around you.</p><CTAButton to="/trails/create">Create my heritage trail</CTAButton></div><div className="trail-promo-art"><span>Crafts</span><span>Food</span><span>Local stories</span><div className="trail-circle">Your<br /><strong>route</strong></div></div></section>
+    <section className="region-section"><div className="container"><SectionHeading eyebrow="India, in many directions" title="Choose a region to begin" body="Kurukshetra is our first chapter. The system is ready to grow with more local voices." /><div className="region-grid">{regions.slice(0, 5).map((region, index) => <Link className={`region-card ${index === 0 ? 'featured' : ''}`} to={`/heritage?region=${region.slug}`} key={region.id}><ImageFrame src={region.image} alt="" className="region-image" /><div><span>{region.state}</span><h3>{region.name}</h3><ArrowRight size={16} /></div></Link>)}</div></div></section>
+    <section className="container note-section"><JoinNotice /></section>
+  </>
+}
+
+function DiscoverPage() {
+  const [params, setParams] = useSearchParams()
+  const query = params.get('q') ?? ''
+  const [input, setInput] = useState(query)
+  const path = `/api/search?q=${encodeURIComponent(query)}`
+  const { data, loading, error } = useResource<SearchResults>(path, emptySearch)
+  const submit = (event: React.FormEvent) => { event.preventDefault(); setParams(input ? { q: input } : {}) }
+  return <div className="container page-container"><PageHero eyebrow="Search the living archive" title="Start with a word." body="Look across heritage places, artisans, stories and regions. Try pottery, water, food or Kurukshetra." /><form className="search-form large" onSubmit={submit}><Search size={21} /><input value={input} onChange={(event) => setInput(event.target.value)} placeholder="What are you curious about?" aria-label="Search across Jeevant Virasat" /><button className="button primary" type="submit">Search</button></form><DataBanner error={error} />{loading && query && <LoadingState label="Searching across places, people and stories…" />}{!query && <div className="discover-start"><div><Eyebrow>Three ways in</Eyebrow><h2>Search is only one beginning.</h2><p>Start from a place, a person or a practice. The connections are the point.</p></div><div className="discover-links"><Link to="/heritage"><span>01</span><strong>Browse heritage</strong><ArrowRight size={16} /></Link><Link to="/artisans"><span>02</span><strong>Meet artisans</strong><ArrowRight size={16} /></Link><Link to="/trails/create"><span>03</span><strong>Build a trail</strong><ArrowRight size={16} /></Link></div></div>}{query && !loading && <SearchResultGroups data={data} query={query} />}</div>
+}
+
+function SearchResultGroups({ data, query }: { data: SearchResults; query: string }) {
+  const total = data.heritage.length + data.artisans.length + data.stories.length + data.regions.length
+  if (!total) return <EmptyState title={`No results for “${query}”`} body="Try a broader word such as craft, food, water or story." />
+  return <div className="search-results"><div className="search-result-header"><Eyebrow>Search results</Eyebrow><p>{total} connections found for <strong>“{query}”</strong></p></div>{data.heritage.length > 0 && <section><SectionHeading title="Heritage" action={<ArrowLink to={`/heritage?search=${encodeURIComponent(query)}`}>View all</ArrowLink>} /><div className="heritage-grid">{data.heritage.map((item) => <HeritageCard key={item.id} item={item} />)}</div></section>}{data.artisans.length > 0 && <section><SectionHeading title="Artisans" /><div className="artisan-grid">{data.artisans.map((item) => <ArtisanCard key={item.id} item={item} />)}</div></section>}{data.stories.length > 0 && <section><SectionHeading title="Stories" /><div className="story-grid">{data.stories.map((item) => <StoryCard key={item.id} item={item} />)}</div></section>}{data.regions.length > 0 && <section><SectionHeading title="Regions" /><div className="region-list">{data.regions.map((region) => <Link to={`/heritage?region=${region.slug}`} key={region.id}><MapPin size={17} /><span><strong>{region.name}</strong><small>{region.state}</small></span><ArrowRight size={16} /></Link>)}</div></section>}</div>
+}
+
+function HeritagePage() {
+  const [params, setParams] = useSearchParams()
+  const search = params.get('search') ?? ''
+  const region = params.get('region') ?? ''
+  const category = params.get('category') ?? ''
+  const duration = params.get('duration') ?? ''
+  const sort = params.get('sort') ?? ''
+  const query = new URLSearchParams({ ...(search && { search }), ...(region && { region }), ...(category && { category }), ...(duration && { duration }), ...(sort && { sort }) }).toString()
+  const fallback = useMemo(() => heritage.filter((item) => (!search || JSON.stringify(item).toLowerCase().includes(search.toLowerCase())) && (!region || item.regionId.endsWith(region)) && (!category || item.category === category)), [search, region, category])
+  const { data, loading, error } = useResource<HeritageLocation[]>(`/api/heritage${query ? `?${query}` : ''}`, fallback)
+  const setFilter = (key: string, value: string) => { const next = new URLSearchParams(params); if (value) next.set(key, value); else next.delete(key); setParams(next) }
+  return <div className="container page-container"><PageHero eyebrow="Discover heritage" title="Places with a pulse." body="Go beyond the headline attraction. Browse living traditions, local history, craft and food across a growing map of India." /><div className="filter-layout"><aside className="filter-panel"><div className="filter-title"><Filter size={16} /><strong>Refine the view</strong></div><label>Search<input value={search} onChange={(event) => setFilter('search', event.target.value)} placeholder="Try pottery…" /></label><label>Region<select value={region} onChange={(event) => setFilter('region', event.target.value)}><option value="">All regions</option>{regions.map((item) => <option key={item.id} value={item.slug}>{item.name}</option>)}</select></label><label>Category<select value={category} onChange={(event) => setFilter('category', event.target.value)}><option value="">All categories</option>{categories.map((item) => <option key={item}>{item}</option>)}</select></label><label>Time on site<select value={duration} onChange={(event) => setFilter('duration', event.target.value)}><option value="">Any duration</option><option value="short">Up to 90 min</option><option value="medium">Up to 3 hours</option><option value="long">Longer visits</option></select></label>{(search || region || category || duration || sort) && <button className="text-button clear-filters" onClick={() => setParams({})}>Clear all <X size={15} /></button>}</aside><div className="results-column"><div className="results-toolbar"><p><strong>{data.length}</strong> places to look closer</p><label className="sort-select">Sort<select value={sort} onChange={(event) => setFilter('sort', event.target.value)}><option value="">Curated order</option><option value="name">Name</option><option value="duration">Shortest visit</option></select><ChevronDown size={14} /></label></div><DataBanner error={error} />{loading && <LoadingState />}{!loading && !data.length ? <EmptyState title="No places match those filters" body="Try Kurukshetra, craft or a shorter visit." /> : <div className="heritage-grid">{data.map((item) => <HeritageCard key={item.id} item={item} />)}</div>}</div></div></div>
+}
+
+function HeritageDetailPage() {
+  const { slug } = useParams()
+  const fallback = heritage.find((item) => item.slug === slug)
+  const { data: item, loading, error } = useResource<HeritageLocation | undefined>(`/api/heritage/${slug}`, fallback)
+  const { toggle, has } = useFavorites()
+  if (loading && !item) return <div className="container page-container"><LoadingState /></div>
+  if (!item) return <NotFound label="This heritage place could not be found." />
+  const relatedStories = stories.filter((story) => item.id && story.relatedHeritageIds.includes(item.id)).slice(0, 3)
+  const relatedArtisans = artisans.filter((artisan) => artisan.relatedHeritageIds.includes(item.id)).slice(0, 3)
+  const favorite = { kind: 'heritage' as const, id: item.id, label: item.name, href: `/heritage/${item.slug}`, image: item.image }
+  return <div className="detail-page"><div className="container"><Link className="back-link" to="/heritage"><ArrowLeft size={15} /> All heritage</Link><DataBanner error={error} /><section className="detail-hero"><ImageFrame src={item.image} alt="" className="detail-image" /><div className="detail-title"><Tag>{item.category}</Tag><h1>{item.name}</h1><p className="detail-location"><MapPin size={16} /> {item.regionName} · {item.durationMinutes} min visit</p><div className="detail-actions"><FavoriteButton favorite={favorite} active={has('heritage', item.id)} onToggle={toggle} /><CTAButton to={`/trails/create?heritage=${item.slug}`}>Add to a trail</CTAButton></div></div></section><div className="detail-grid"><article className="editorial-copy"><Eyebrow>The place</Eyebrow><h2>{item.shortDescription}</h2><p className="lead">{item.description}</p><h3>Why it matters</h3><p>{item.culturalSignificance}</p><h3>The context</h3><p>{item.historicalContext}</p><div className="living-card"><span>Still alive today</span><p>{item.livingToday}</p></div><JoinNotice /></article><aside className="detail-aside"><div className="tag-block"><span>Look for</span><div>{item.tags.map((tag) => <Tag key={tag}>{tag}</Tag>)}</div></div><div className="gallery-grid">{item.gallery.map((src, index) => <ImageFrame key={src} src={src} alt={`${item.name} detail ${index + 1}`} className={index === 0 ? 'gallery-wide' : ''} />)}</div></aside></div>{relatedArtisans.length > 0 && <section className="related-section"><SectionHeading eyebrow="Meet the people around the practice" title="Related artisans" /><div className="artisan-grid">{relatedArtisans.map((artisan) => <ArtisanCard key={artisan.id} item={artisan} />)}</div></section>}{relatedStories.length > 0 && <section className="related-section"><SectionHeading eyebrow="Read before you go" title="Related stories" /><div className="story-grid">{relatedStories.map((story) => <StoryCard key={story.id} item={story} />)}</div></section>}</div></div>
+}
+
+function MapPage() {
+  const [params, setParams] = useSearchParams()
+  const region = params.get('region') ?? 'kurukshetra'
+  const category = params.get('category') ?? ''
+  const fallback = heritage.filter((item) => item.regionId.endsWith(region) && (!category || item.category === category))
+  const { data, error } = useResource<HeritageLocation[]>(`/api/heritage?region=${region}${category ? `&category=${encodeURIComponent(category)}` : ''}`, fallback)
+  const [selectedId, setSelectedId] = useState(data[0]?.id)
+  const selected = data.find((item) => item.id === selectedId) ?? data[0]
+  useEffect(() => { if (data[0] && !data.some((item) => item.id === selectedId)) setSelectedId(data[0].id) }, [data, selectedId])
+  return <div className="container page-container map-page"><PageHero eyebrow="The hidden heritage map" title="Let the landscape lead." body="Pan across Kurukshetra and follow the connections between water, craft, food, memory and daily life." /><div className="map-toolbar"><label>Region<select value={region} onChange={(event) => setParams({ region: event.target.value, ...(category && { category }) })}>{regions.map((item) => <option key={item.id} value={item.slug}>{item.name}, {item.state}</option>)}</select></label><label>Category<select value={category} onChange={(event) => setParams({ region, ...(event.target.value && { category: event.target.value }) })}><option value="">All categories</option>{categories.map((item) => <option key={item}>{item}</option>)}</select></label><span className="map-count">{data.length} mapped places</span></div><DataBanner error={error} /><div className="map-layout"><MapView items={data} selected={selected} onSelect={(item) => setSelectedId(item.id)} height="650px" /><aside className="map-list">{data.map((item) => <button key={item.id} className={`map-list-item ${selected?.id === item.id ? 'selected' : ''}`} onClick={() => setSelectedId(item.id)}><ImageFrame src={item.image} alt="" className="list-thumb" /><span><Tag>{item.category}</Tag><strong>{item.name}</strong><small>{item.durationMinutes} min · {item.regionName}</small></span><ArrowRight size={15} /></button>)}{selected && <div className="map-selected"><Eyebrow>Selected place</Eyebrow><h3>{selected.name}</h3><p>{selected.shortDescription}</p><ArrowLink to={`/heritage/${selected.slug}`}>Read place story</ArrowLink></div>}</aside></div></div>
+}
+
+function ArtisansPage() {
+  const [params, setParams] = useSearchParams()
+  const search = params.get('search') ?? ''
+  const region = params.get('region') ?? ''
+  const fallback = artisans.filter((item) => (!search || JSON.stringify(item).toLowerCase().includes(search.toLowerCase())) && (!region || item.regionId.endsWith(region)))
+  const { data, error } = useResource<Artisan[]>(`/api/artisans?${new URLSearchParams({ ...(search && { search }), ...(region && { region }) })}`, fallback)
+  const { toggle, has } = useFavorites()
+  return <div className="container page-container"><PageHero eyebrow="People + craft + story" title="Meet the hands behind the place." body="Artisan discovery is not a marketplace shortcut. It is a way to understand a region through the people who keep making it." /><div className="list-controls"><form className="search-form" onSubmit={(event) => event.preventDefault()}><Search size={17} /><input value={search} onChange={(event) => setParams({ ...(event.target.value && { search: event.target.value }), ...(region && { region }) })} placeholder="Search a craft or maker" /></form><select value={region} onChange={(event) => setParams({ ...(search && { search }), ...(event.target.value && { region: event.target.value }) })}><option value="">All regions</option>{regions.map((item) => <option value={item.slug} key={item.id}>{item.name}</option>)}</select></div><DataBanner error={error} /><div className="artisan-grid large-grid">{data.map((item) => <ArtisanCard key={item.id} item={item} favorite={{ active: has('artisan', item.id), onToggle: toggle }} />)}</div>{!data.length && <EmptyState title="No makers found" />}</div>
+}
+
+function ArtisanDetailPage() {
+  const { slug } = useParams()
+  const fallback = artisans.find((item) => item.slug === slug)
+  const { data: item, loading, error } = useResource<Artisan | undefined>(`/api/artisans/${slug}`, fallback)
+  const { toggle, has } = useFavorites()
+  if (loading && !item) return <div className="container page-container"><LoadingState /></div>
+  if (!item) return <NotFound label="This artisan profile could not be found." />
+  const related = heritage.filter((place) => item.relatedHeritageIds.includes(place.id))
+  const favorite = { kind: 'artisan' as const, id: item.id, label: item.name, href: `/artisans/${item.slug}`, image: item.profileImage }
+  return <div className="detail-page artisan-detail"><div className="container"><Link className="back-link" to="/artisans"><ArrowLeft size={15} /> All artisans</Link><DataBanner error={error} /><section className="artisan-profile-hero"><ImageFrame src={item.profileImage} alt={`Portrait of ${item.name}`} className="profile-image" /><div><span className="card-kicker">{item.craft}</span><h1>{item.name}</h1><p className="detail-location"><MapPin size={16} /> {item.location} · {item.yearsOfExperience} years of practice</p><p className="profile-intro">{item.biography}</p><div className="detail-actions"><FavoriteButton favorite={favorite} active={has('artisan', item.id)} onToggle={toggle} /><button className="button primary" onClick={() => window.alert('Prototype connection request noted. A production version would route this through a verified local partner.')}>Connect with artisan <ArrowRight size={16} /></button></div></div></section><div className="detail-grid"><article className="editorial-copy"><Eyebrow>The craft story</Eyebrow><h2>“{item.craftStory}”</h2><p>{item.biography}</p><h3>Specialties</h3><div className="tag-row">{item.specialties.map((specialty) => <Tag key={specialty}>{specialty}</Tag>)}</div><div className="living-card"><span>Connect respectfully</span><p>{item.contactMethod}. This prototype does not process payments or publish private contact details.</p></div></article><aside className="detail-aside"><div className="gallery-grid">{item.gallery.map((src, index) => <ImageFrame key={src} src={src} alt={`${item.craft} detail ${index + 1}`} className={index === 0 ? 'gallery-wide' : ''} />)}</div></aside></div>{related.length > 0 && <section className="related-section"><SectionHeading eyebrow="Follow the practice" title="Related heritage" /><div className="heritage-grid">{related.map((place) => <HeritageCard key={place.id} item={place} />)}</div></section>}</div></div>
+}
+
+function StoriesPage() {
+  const { data, error } = useResource<Story[]>('/api/stories', stories)
+  const { toggle, has } = useFavorites()
+  return <div className="container page-container"><PageHero eyebrow="Field notes" title="Stories that keep the place open." body="Editorial entries for the histories, practices and people you may miss when you only visit the landmark." /><DataBanner error={error} /><div className="story-feature"><ImageFrame src={data[0]?.image ?? stories[0].image} alt="" className="story-feature-image" /><div><Eyebrow>Lead story</Eyebrow><h2>{data[0]?.title}</h2><p>{data[0]?.excerpt}</p><ArrowLink to={`/stories/${data[0]?.slug}`}>Read the story</ArrowLink></div></div><div className="story-grid">{data.slice(1).map((item) => <StoryCard key={item.id} item={item} favorite={{ active: has('story', item.id), onToggle: toggle }} />)}</div></div>
+}
+
+function StoryDetailPage() {
+  const { slug } = useParams()
+  const fallback = stories.find((item) => item.slug === slug)
+  const { data: item, loading, error } = useResource<Story | undefined>(`/api/stories/${slug}`, fallback)
+  const { toggle, has } = useFavorites()
+  if (loading && !item) return <div className="container page-container"><LoadingState /></div>
+  if (!item) return <NotFound label="This story could not be found." />
+  const relatedPlaces = heritage.filter((place) => item.relatedHeritageIds.includes(place.id))
+  const relatedArtisans = artisans.filter((artisan) => item.relatedArtisanIds.includes(artisan.id))
+  const favorite = { kind: 'story' as const, id: item.id, label: item.title, href: `/stories/${item.slug}`, image: item.image }
+  return <div className="story-detail"><div className="container"><Link className="back-link" to="/stories"><ArrowLeft size={15} /> All stories</Link><DataBanner error={error} /><div className="story-detail-head"><Tag>{item.category}</Tag><h1>{item.title}</h1><p>{item.excerpt}</p><div className="story-byline"><span>{item.regionName}</span><span>·</span><span>Field note</span><FavoriteButton favorite={favorite} active={has('story', item.id)} onToggle={toggle} /></div></div><ImageFrame src={item.image} alt="" className="story-detail-image" /><article className="longform">{item.content.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}</article>{relatedPlaces.length > 0 && <section className="related-section"><SectionHeading eyebrow="Keep following the thread" title="Places in this story" /><div className="heritage-grid">{relatedPlaces.map((place) => <HeritageCard key={place.id} item={place} />)}</div></section>}{relatedArtisans.length > 0 && <section className="related-section"><SectionHeading eyebrow="The people in the frame" title="Related artisans" /><div className="artisan-grid">{relatedArtisans.map((artisan) => <ArtisanCard key={artisan.id} item={artisan} />)}</div></section>}</div></div>
+}
+
+function TrailsPage() {
+  const { toggle, has } = useFavorites()
+  return <div className="container page-container"><PageHero eyebrow="Routes with a point of view" title="Take the scenic route through culture." body="Use a sample trail to understand the format, or build one around what you want to notice." ><CTAButton to="/trails/create">Create my trail</CTAButton></PageHero><div className="trail-list">{sampleTrails.map((trail) => <article className="trail-card" key={trail.id}><div className="trail-card-art"><span>{trail.stops.length} stops</span><strong>{trail.regionName}</strong></div><div className="trail-card-copy"><div className="card-meta"><Tag>{trail.experienceType}</Tag><span><Clock3 size={13} /> {Math.floor(trail.duration / 60)}h {trail.duration % 60 ? `${trail.duration % 60}m` : ''}</span></div><h2>{trail.name}</h2><p>For {trail.interests.join(' · ').toLowerCase()}. A considered route through {trail.stops.map((stop) => stop.name).join(', ')}.</p><div className="card-footer"><Link className="arrow-link" to={`/trails/${trail.id}`}>View trail <ArrowRight size={15} /></Link><FavoriteButton favorite={{ kind: 'trail', id: trail.id, label: trail.name, href: `/trails/${trail.id}` }} active={has('trail', trail.id)} onToggle={toggle} /></div></div></article>)}</div></div>
+}
+
+function TrailDetailPage() {
+  const { id } = useParams()
+  const location = useLocation()
+  const stateTrail = (location.state as { trail?: Trail } | null)?.trail
+  const fallback = stateTrail ?? sampleTrails.find((trail) => trail.id === id)
+  const { data: trail, loading, error } = useResource<Trail | undefined>(`/api/trails/${id}`, fallback)
+  const { toggle, has } = useFavorites()
+  if (loading && !trail) return <div className="container page-container"><LoadingState /></div>
+  if (!trail) return <NotFound label="This trail has expired or could not be found." />
+  const time = `${Math.floor(trail.duration / 60)}h${trail.duration % 60 ? ` ${trail.duration % 60}m` : ''}`
+  return <div className="container page-container trail-detail"><Link className="back-link" to="/trails"><ArrowLeft size={15} /> All trails</Link><DataBanner error={error} /><div className="trail-detail-head"><div><Eyebrow>Your heritage trail</Eyebrow><h1>{trail.name}</h1><p>{trail.stops.length} stops · estimated {time} · {trail.experienceType}</p></div><FavoriteButton favorite={{ kind: 'trail', id: trail.id, label: trail.name, href: `/trails/${trail.id}` }} active={has('trail', trail.id)} onToggle={toggle} /></div><div className="trail-result-layout"><div className="trail-timeline">{trail.stops.map((stop, index) => <article className="timeline-stop" key={stop.id}><div className="timeline-index">0{index + 1}</div><div className="timeline-line" /><ImageFrame src={stop.image} alt="" className="timeline-image" /><div className="timeline-copy"><div className="card-meta"><Tag>{stop.category}</Tag><span><Clock3 size={13} /> {stop.durationMinutes} min</span></div><h2>{stop.name}</h2><p>{stop.description}</p><MatchNote>{stop.matchReason}</MatchNote><Link className="arrow-link" to={`/heritage/${stop.slug}`}>Read place story <ArrowRight size={15} /></Link></div></article>)}</div><div className="trail-map-sticky"><MapView items={trail.stops} height="520px" /></div></div><div className="trail-footer-callout"><BookOpen size={20} /><div><strong>Travel with context</strong><p>These recommendations are a rule-based prototype. Confirm timings and access locally, and let community guidance shape the visit.</p></div><CTAButton to="/trails/create">Make another trail</CTAButton></div></div>
+}
+
+function FavoritesPage() {
+  const { favorites, toggle } = useFavorites()
+  return <div className="container page-container"><PageHero eyebrow="Your field notebook" title="Saved for later." body="Keep places, people, stories and trails together while you plan your route." />{!favorites.length ? <div className="favorites-empty"><BookOpen size={27} /><h2>Your notebook is empty.</h2><p>Save a place, artisan, story or trail and it will appear here on this device.</p><CTAButton to="/heritage">Start with heritage</CTAButton></div> : <div className="favorites-grid">{favorites.map((favorite) => <article key={`${favorite.kind}-${favorite.id}`} className="favorite-card">{favorite.image && <ImageFrame src={favorite.image} alt="" className="favorite-image" />}<div><Tag>{favorite.kind}</Tag><Link to={favorite.href}><h3>{favorite.label}</h3></Link><div className="card-footer"><Link className="arrow-link" to={favorite.href}>Open <ArrowRight size={15} /></Link><FavoriteButton favorite={favorite} active onToggle={toggle} /></div></div></article>)}</div>}</div>
+}
+
+function AboutPage() { return <div className="container page-container about-page"><PageHero eyebrow="The idea" title="A platform for the heritage that keeps moving." body="Jeevant Virasat means living heritage. The project is built around a simple shift: look past the landmark, and ask who keeps a place meaningful now." /><div className="about-grid"><article><Eyebrow>The problem</Eyebrow><h2>Tourism often compresses culture into a list of attractions.</h2><p>That makes it harder to find local practices, community stories, regional food and the artisans whose work gives a place its texture.</p></article><article><Eyebrow>The bridge</Eyebrow><h2>Traveler ↔ Heritage ↔ Community ↔ Artisan</h2><p>Our discovery flow moves from a place to its context, then to the people and practices around it. The goal is a more useful first step, not a substitute for local knowledge.</p></article><article><Eyebrow>The prototype</Eyebrow><h2>Kurukshetra is the first chapter.</h2><p>The current demonstration region is intentionally small. Data structures, APIs and trail logic are designed to grow with more regions and community-reviewed content.</p></article><article><Eyebrow>The promise</Eyebrow><h2>Specific, grounded and responsible.</h2><p>We avoid invented credentials, testimonials and statistics. Demonstration content is clearly marked and should be validated before any public deployment.</p></article></div><JoinNotice /></div> }
+
+function NotFound({ label = 'The page you are looking for has moved.' }: { label?: string }) { return <div className="container page-container not-found"><span className="not-found-number">404</span><h1>There’s another path from here.</h1><p>{label}</p><CTAButton to="/">Return home</CTAButton></div> }
+
+export default function App() {
+  return <><ScrollToTop /><Routes><Route element={<Layout />}><Route path="/" element={<HomePage />} /><Route path="/discover" element={<DiscoverPage />} /><Route path="/heritage" element={<HeritagePage />} /><Route path="/heritage/:slug" element={<HeritageDetailPage />} /><Route path="/map" element={<MapPage />} /><Route path="/artisans" element={<ArtisansPage />} /><Route path="/artisans/:slug" element={<ArtisanDetailPage />} /><Route path="/stories" element={<StoriesPage />} /><Route path="/stories/:slug" element={<StoryDetailPage />} /><Route path="/trails" element={<TrailsPage />} /><Route path="/trails/create" element={<div className="container page-container"><PageHero eyebrow="Build a personal route" title="A trail shaped around your attention." body="Four steps. A few honest preferences. A route you can actually explain to someone when you get home." /><TrailBuilder /></div>} /><Route path="/trails/:id" element={<TrailDetailPage />} /><Route path="/favorites" element={<FavoritesPage />} /><Route path="/about" element={<AboutPage />} /><Route path="*" element={<NotFound />} /></Route></Routes></>
+}
