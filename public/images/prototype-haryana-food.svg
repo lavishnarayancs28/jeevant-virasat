@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 700" role="img" aria-labelledby="title desc">
+  <title id="title">Prototype Haryana food record placeholder</title><desc id="desc">A bowl and grain illustration with a visible prototype label. No dish, kitchen or person is depicted.</desc>
+  <rect width="900" height="700" fill="#f0dfc8"/><path fill="#234b4b" d="M0 0h900v100H0z"/><ellipse cx="450" cy="360" rx="220" ry="70" fill="#bb6945"/><path fill="#f7efe4" d="M230 355h440c-20 150-100 220-220 220s-200-70-220-220z"/><circle cx="355" cy="335" r="18" fill="#e8a675"/><circle cx="450" cy="320" r="18" fill="#e8a675"/><circle cx="545" cy="338" r="18" fill="#e8a675"/><text x="450" y="640" text-anchor="middle" fill="#234b4b" font-family="Arial,sans-serif" font-size="24" letter-spacing="4">PROTOTYPE RECORD · VERIFY WITH LOCAL COOKS</text>
+</svg>

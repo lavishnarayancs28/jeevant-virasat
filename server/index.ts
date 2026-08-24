@@ -27,6 +27,13 @@ function matchesText(item: HeritageLocation | Artisan | Story | Region, query: s
   return JSON.stringify(item).toLowerCase().includes(query)
 }
 
+function regionMatches(item: HeritageLocation | Artisan | Story | Region, region: string) {
+  if (!region) return true
+  if ('regionId' in item && (item.regionId.endsWith(region) || item.regionName.toLowerCase() === region)) return true
+  if ('state' in item && item.state.toLowerCase() === region) return true
+  return 'location' in item && item.location.toLowerCase().includes(region)
+}
+
 app.get('/api/regions', (_req, res) => res.json(ok(regions)))
 app.get('/api/regions/:slug', (req, res) => {
   const region = bySlug(regions, req.params.slug)
@@ -41,11 +48,11 @@ app.get('/api/heritage', (req, res) => {
   const sort = queryText(req.query.sort)
   const mode = queryText(req.query.mode)
   let result = heritage.filter((item) => {
-    const matchesRegion = !region || item.regionId.endsWith(region) || item.regionName.toLowerCase() === region
+    const matchesRegion = regionMatches(item, region)
     const matchesCategory = !category || item.category.toLowerCase() === category
     const matchesSearch = !search || matchesText(item, search)
-    const matchesDuration = !duration || (duration === 'short' ? item.durationMinutes <= 90 : duration === 'medium' ? item.durationMinutes <= 180 : item.durationMinutes > 180)
-    const matchesMode = !mode || (mode === 'living' ? ['Folk Culture', 'Community Practice', 'Sacred Tradition', 'Festival'].includes(item.category) : mode === 'food' ? item.category === 'Food' : true)
+    const matchesDuration = !duration || (duration === 'short' ? item.durationMinutes <= 90 : duration === 'medium' ? item.durationMinutes > 90 && item.durationMinutes <= 180 : item.durationMinutes > 180)
+    const matchesMode = !mode || (mode === 'living' ? ['Folk Culture', 'Community Practice', 'Sacred Tradition', 'Sacred Heritage', 'Sacred Landscape', 'Living Heritage', 'Festival'].includes(item.category) : mode === 'food' ? item.category === 'Food' : true)
     return matchesRegion && matchesCategory && matchesSearch && matchesDuration && matchesMode
   })
   if (sort === 'duration') result = [...result].sort((a, b) => a.durationMinutes - b.durationMinutes)
@@ -62,7 +69,7 @@ app.get('/api/hidden-heritage', (req, res) => {
   const region = queryText(req.query.region)
   const category = queryText(req.query.category)
   const result = hiddenHeritage.filter((item) => {
-    const matchesRegion = !region || item.regionId.endsWith(region) || item.regionName.toLowerCase() === region
+    const matchesRegion = regionMatches(item, region)
     const matchesCategory = !category || item.category.toLowerCase() === category
     return matchesRegion && matchesCategory && (!search || matchesText(item, search))
   })
@@ -72,7 +79,7 @@ app.get('/api/hidden-heritage', (req, res) => {
 app.get('/api/artisans', (req, res) => {
   const search = queryText(req.query.search)
   const region = queryText(req.query.region)
-  const result = artisans.filter((item) => (!search || matchesText(item, search)) && (!region || item.regionId.endsWith(region) || item.regionName.toLowerCase() === region))
+  const result = artisans.filter((item) => (!search || matchesText(item, search)) && regionMatches(item, region))
   return res.json(ok(result))
 })
 app.get('/api/artisans/:slug', (req, res) => {
@@ -83,7 +90,7 @@ app.get('/api/artisans/:slug', (req, res) => {
 app.get('/api/stories', (req, res) => {
   const search = queryText(req.query.search)
   const region = queryText(req.query.region)
-  const result = stories.filter((item) => (!search || matchesText(item, search)) && (!region || item.regionId.endsWith(region) || item.regionName.toLowerCase() === region))
+  const result = stories.filter((item) => (!search || matchesText(item, search)) && regionMatches(item, region))
   return res.json(ok(result))
 })
 app.get('/api/stories/:slug', (req, res) => {
@@ -107,7 +114,7 @@ app.get('/api/impact', (_req, res) => res.json(ok({
   artisanProfiles: artisans.length,
   culturalStories: stories.length,
   regionsRepresented: new Set(heritage.map((item) => item.regionId)).size,
-  livingTraditions: heritage.filter((item) => ['Folk Culture', 'Community Practice', 'Sacred Tradition'].includes(item.category)).length,
+  livingTraditions: heritage.filter((item) => ['Folk Culture', 'Community Practice', 'Sacred Tradition', 'Sacred Heritage', 'Sacred Landscape', 'Living Heritage', 'Festival'].includes(item.category)).length,
   hiddenHeritageEntries: hiddenHeritage.length,
 })))
 

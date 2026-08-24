@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 700" role="img" aria-labelledby="title desc">
+  <title id="title">Prototype textile process placeholder</title><desc id="desc">A geometric textile pattern with a visible prototype label. No person is depicted.</desc>
+  <rect width="900" height="700" fill="#e9d6bd"/><path fill="#234b4b" d="M0 0h900v90H0zM0 610h900v90H0z"/><path fill="#bb6945" d="M55 145h790v410H55z"/><path fill="#f7efe4" d="M120 210h660v280H120z"/>
+  <g fill="none" stroke="#234b4b" stroke-width="14"><path d="M150 240l90 90-90 90M300 240l90 90-90 90M450 240l90 90-90 90M600 240l90 90-90 90"/><path d="M190 470h520"/></g>
+  <text x="450" y="640" text-anchor="middle" fill="#f7efe4" font-family="Arial,sans-serif" font-size="24" letter-spacing="4">PROTOTYPE IMAGE · NO PERSON DEPICTED</text>
+</svg>

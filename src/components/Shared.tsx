@@ -39,7 +39,7 @@ export function HeritageCard({ item, favorite, compact = false, showHiddenNote =
 
 export function ArtisanCard({ item, favorite }: { item: Artisan; favorite?: { active: boolean; onToggle: (favorite: FavoriteRecord) => void } }) {
   const record: FavoriteRecord = { kind: 'artisan', id: item.id, label: item.name, href: `/artisans/${item.slug}`, image: item.profileImage }
-  return <article className="artisan-card"><Link to={`/artisans/${item.slug}`}><ImageFrame src={item.profileImage} alt="" className="portrait-image" /></Link><div className="card-body"><span className="card-kicker">{item.craft}</span><Link to={`/artisans/${item.slug}`}><h3>{item.name}</h3></Link><p>{item.biography}</p><div className="card-footer"><span className="muted"><MapPin size={13} /> {item.location}</span>{favorite && <FavoriteButton favorite={record} active={favorite.active} onToggle={favorite.onToggle} />}</div></div></article>
+  return <article className="artisan-card"><Link to={`/artisans/${item.slug}`}><ImageFrame src={item.profileImage} alt={`Prototype image for ${item.craft}; no person depicted`} className="portrait-image" /></Link><div className="card-body"><div className="card-meta"><Tag tone="success">Prototype record</Tag></div><span className="card-kicker">{item.craft}</span><Link to={`/artisans/${item.slug}`}><h3>{item.name}</h3></Link><p>{item.biography}</p><div className="card-footer"><span className="muted"><MapPin size={13} /> {item.location}</span>{favorite && <FavoriteButton favorite={record} active={favorite.active} onToggle={favorite.onToggle} />}</div></div></article>
 }
 
 export function StoryCard({ item, favorite }: { item: Story; favorite?: { active: boolean; onToggle: (favorite: FavoriteRecord) => void } }) {

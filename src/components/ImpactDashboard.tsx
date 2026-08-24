@@ -9,7 +9,7 @@ const localImpactMetrics: ImpactMetrics = {
   artisanProfiles: artisans.length,
   culturalStories: stories.length,
   regionsRepresented: new Set(heritage.map((item) => item.regionId)).size,
-  livingTraditions: heritage.filter((item) => ['Folk Culture', 'Community Practice', 'Sacred Tradition'].includes(item.category)).length,
+  livingTraditions: heritage.filter((item) => ['Folk Culture', 'Community Practice', 'Sacred Tradition', 'Sacred Heritage', 'Sacred Landscape', 'Living Heritage', 'Festival'].includes(item.category)).length,
   hiddenHeritageEntries: hiddenHeritage.length,
 }
 

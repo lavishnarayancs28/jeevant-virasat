@@ -1,10 +1,16 @@
 export type HeritageCategory =
   | 'Architecture'
+  | 'Architectural Heritage'
   | 'Craft'
   | 'Food'
   | 'Folk Culture'
   | 'Sacred Tradition'
+  | 'Sacred Heritage'
+  | 'Sacred Landscape'
   | 'Local History'
+  | 'Archaeological Heritage'
+  | 'Museum / Cultural Heritage'
+  | 'Living Heritage'
   | 'Festival'
   | 'Community Practice'
 
@@ -31,6 +37,9 @@ export interface Region {
   country: string
   description: string
   image: string
+  imageSource: string
+  imageLicense: string
+  sourceUrl: string
   latitude: number
   longitude: number
 }
@@ -49,12 +58,19 @@ export interface HeritageLocation {
   livingToday: string
   image: string
   gallery: string[]
+  district: string
+  state: string
+  imageSource: string
+  imageLicense: string
+  imageSourceUrl?: string
+  sourceUrl: string
   latitude: number
   longitude: number
+  coordinateNote?: string
   durationMinutes: number
   tags: string[]
   experienceTypes: ExperienceType[]
-  verifiedStatus: 'Demonstration content' | 'Community source' | 'Research needed'
+  verifiedStatus: 'Demonstration content' | 'Community source' | 'Research needed' | 'Official source'
   isHidden?: boolean
   hiddenReason?: string
 }
@@ -69,9 +85,13 @@ export interface Artisan {
   location: string
   biography: string
   craftStory: string
-  yearsOfExperience: number
+  yearsOfExperience?: number
   profileImage: string
   gallery: string[]
+  profileImageSource: string
+  profileImageLicense: string
+  profileSourceUrl?: string
+  prototypeStatus: 'Unverified prototype record' | 'Community-reviewed' | 'Verified record'
   specialties: string[]
   relatedHeritageIds: string[]
   contactMethod: string

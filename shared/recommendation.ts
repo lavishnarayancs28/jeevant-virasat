@@ -8,17 +8,17 @@ const timeBudgets: Record<TrailRequest['timeChoice'], number> = {
 }
 
 const interestCategories: Record<string, string[]> = {
-  History: ['Local History', 'Sacred Tradition', 'Architecture'],
+  History: ['Local History', 'Sacred Tradition', 'Sacred Heritage', 'Sacred Landscape', 'Archaeological Heritage', 'Architecture', 'Architectural Heritage'],
   Food: ['Food'],
   Crafts: ['Craft'],
-  Architecture: ['Architecture'],
-  Spirituality: ['Sacred Tradition'],
-  'Folk Culture': ['Folk Culture', 'Festival', 'Community Practice'],
-  Photography: ['Architecture', 'Craft', 'Local History', 'Sacred Tradition'],
-  'Local Stories': ['Local History', 'Community Practice', 'Folk Culture', 'Food'],
+  Architecture: ['Architecture', 'Architectural Heritage', 'Museum / Cultural Heritage'],
+  Spirituality: ['Sacred Tradition', 'Sacred Heritage', 'Sacred Landscape'],
+  'Folk Culture': ['Folk Culture', 'Festival', 'Community Practice', 'Living Heritage'],
+  Photography: ['Architecture', 'Architectural Heritage', 'Craft', 'Local History', 'Sacred Tradition', 'Sacred Heritage', 'Sacred Landscape', 'Archaeological Heritage'],
+  'Local Stories': ['Local History', 'Community Practice', 'Folk Culture', 'Food', 'Archaeological Heritage'],
   'Local Food': ['Food'],
-  'Living Traditions': ['Folk Culture', 'Community Practice', 'Sacred Tradition', 'Festival'],
-  'Spiritual/Cultural': ['Sacred Tradition', 'Community Practice'],
+  'Living Traditions': ['Folk Culture', 'Community Practice', 'Sacred Tradition', 'Sacred Heritage', 'Sacred Landscape', 'Living Heritage', 'Festival'],
+  'Spiritual/Cultural': ['Sacred Tradition', 'Sacred Heritage', 'Sacred Landscape', 'Community Practice'],
 }
 
 export function validateTrailRequest(input: unknown): TrailRequest {
@@ -50,7 +50,7 @@ function scoreLocation(location: HeritageLocation, request: TrailRequest) {
   }, 0)
   const experienceMatch = location.experienceTypes.includes(request.experienceType) ? 1 : 0
   const durationFit = location.durationMinutes <= timeBudgets[request.timeChoice] ? 1 : 0
-  const regionMatch = location.regionId === request.regionSlug || location.regionId.endsWith(request.regionSlug) ? 1 : 0
+  const regionMatch = location.regionId === request.regionSlug || location.regionId.endsWith(request.regionSlug) || (request.regionSlug.endsWith('haryana') && location.state === 'Haryana') ? 1 : 0
   const hiddenMatch = location.isHidden ? 1 : 0
   const crowdMatch = request.crowdPreference === 'Hidden Gems' ? hiddenMatch : request.crowdPreference === 'Popular' ? (hiddenMatch ? 0 : 1) : 0
   const score = categoryMatch * 5 + (categoryMatch ? 4 : 0) + tagMatch * 3 + durationFit * 3 + experienceMatch * 2 + regionMatch * 2 + crowdMatch * 4
@@ -60,7 +60,7 @@ function scoreLocation(location: HeritageLocation, request: TrailRequest) {
 export function generateTrail(request: TrailRequest, locations: HeritageLocation[], regionName: string): Trail {
   const budget = timeBudgets[request.timeChoice]
   const ranked = locations
-    .filter((location) => location.regionId === request.regionSlug || location.regionId.endsWith(request.regionSlug))
+    .filter((location) => location.regionId === request.regionSlug || location.regionId.endsWith(request.regionSlug) || (request.regionSlug.endsWith('haryana') && location.state === 'Haryana'))
     .map((location) => ({ location, metrics: scoreLocation(location, request) }))
     .sort((a, b) => b.metrics.score - a.metrics.score || a.location.durationMinutes - b.location.durationMinutes)
 
