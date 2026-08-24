@@ -26,12 +26,12 @@ export function FavoriteButton({ favorite, active, onToggle }: { favorite: Favor
   return <button className={`favorite-button ${active ? 'active' : ''}`} onClick={() => onToggle(favorite)} aria-pressed={active} aria-label={active ? `Remove ${favorite.label} from favorites` : `Save ${favorite.label} to favorites`}><Heart size={16} fill={active ? 'currentColor' : 'none'} /> <span>{active ? 'Saved' : 'Save'}</span></button>
 }
 
-export function HeritageCard({ item, favorite, compact = false }: { item: HeritageLocation; favorite?: { active: boolean; onToggle: (favorite: FavoriteRecord) => void }; compact?: boolean }) {
+export function HeritageCard({ item, favorite, compact = false, showHiddenNote = false }: { item: HeritageLocation; favorite?: { active: boolean; onToggle: (favorite: FavoriteRecord) => void }; compact?: boolean; showHiddenNote?: boolean }) {
   const record: FavoriteRecord = { kind: 'heritage', id: item.id, label: item.name, href: `/heritage/${item.slug}`, image: item.image }
   return <article className={`heritage-card ${compact ? 'compact' : ''}`}>
     <Link to={`/heritage/${item.slug}`} aria-label={`Read ${item.name}`}><ImageFrame src={item.image} alt="" className="card-image" /></Link>
     <div className="card-body"><div className="card-meta"><Tag>{item.category}</Tag><span><Clock3 size={13} /> {item.durationMinutes} min</span></div>
-      <Link to={`/heritage/${item.slug}`}><h3>{item.name}</h3></Link><p>{item.shortDescription}</p>
+      <Link to={`/heritage/${item.slug}`}><h3>{item.name}</h3></Link><p>{item.shortDescription}</p>{showHiddenNote && item.isHidden && <div className="hidden-card-note"><strong>Why explore this?</strong><span>{item.hiddenReason ?? 'Less-known in our prototype dataset.'}</span></div>}
       <div className="card-footer"><span className="muted"><MapPin size={13} /> {item.regionName}</span>{favorite && <FavoriteButton favorite={record} active={favorite.active} onToggle={favorite.onToggle} />}</div>
     </div>
   </article>

@@ -2,7 +2,7 @@ import { Menu, Search, X } from 'lucide-react'
 import { NavLink, Link, Outlet, useLocation } from 'react-router-dom'
 import { useState } from 'react'
 
-const navItems = [['/heritage', 'Discover'], ['/map', 'Heritage map'], ['/artisans', 'Artisans'], ['/trails', 'Trails'], ['/stories', 'Stories']]
+const navItems = [['/heritage', 'Discover'], ['/hidden-heritage', 'Hidden Heritage'], ['/map', 'Heritage map'], ['/artisans', 'Artisans'], ['/trails', 'Trails'], ['/stories', 'Stories']]
 
 export function Layout() {
   const [open, setOpen] = useState(false)
@@ -15,6 +15,6 @@ export function Layout() {
     </header>
     {location.pathname !== '/' && <div className="route-ribbon"><span>Demonstration region</span><strong>Kurukshetra · Haryana</strong><Link to="/map">View on map ↗</Link></div>}
     <main><Outlet /></main>
-    <footer className="site-footer"><div className="footer-main"><div><Link to="/" className="brand"><span className="brand-mark">JV</span><span>Jeevant <em>Virasat</em></span></Link><p>Living heritage, local voices and the routes between them.</p></div><div className="footer-links"><div><span>Explore</span><Link to="/heritage">Heritage</Link><Link to="/artisans">Artisans</Link><Link to="/stories">Stories</Link></div><div><span>Make a plan</span><Link to="/trails/create">Create a trail</Link><Link to="/favorites">Saved places</Link><Link to="/about">About the project</Link></div></div></div><div className="footer-bottom"><span>© 2026 Jeevant Virasat · SIH26195</span><span>Built for curious, responsible travel.</span></div></footer>
+    <footer className="site-footer"><div className="footer-main"><div><Link to="/" className="brand"><span className="brand-mark">JV</span><span>Jeevant <em>Virasat</em></span></Link><p>Living heritage, local voices and the routes between them.</p></div><div className="footer-links"><div><span>Explore</span><Link to="/heritage">Heritage</Link><Link to="/hidden-heritage">Hidden Heritage</Link><Link to="/artisans">Artisans</Link><Link to="/stories">Stories</Link></div><div><span>Make a plan</span><Link to="/trails/create">Build a cultural trail</Link><Link to="/identify">Identify Heritage</Link><Link to="/impact">Cultural Impact</Link><Link to="/favorites">Saved places</Link><Link to="/about">About the project</Link></div></div></div><div className="footer-bottom"><span>© 2026 Jeevant Virasat · SIH26195</span><span>Built for curious, responsible travel.</span></div></footer>
   </div>
 }

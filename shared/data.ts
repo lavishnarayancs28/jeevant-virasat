@@ -1,4 +1,4 @@
-import type { Artisan, HeritageLocation, Region, Story, Trail } from './types'
+import type { Artisan, HeritageLocation, RecognitionExample, Region, Story, Trail } from './types'
 
 const image = (id: string, width = 1200) => `https://images.unsplash.com/${id}?auto=format&fit=crop&w=${width}&q=85`
 
@@ -85,7 +85,7 @@ export const heritage: HeritageLocation[] = [
     historicalContext: 'Accounts of the town’s ritual importance vary by source and community. Treat the visit as an invitation to hear local histories, not a final historical verdict.',
     livingToday: 'Keep conversations consent-based and do not photograph private rituals.',
     image: image('photo-1500534623283-312aade485b7'), gallery: [image('photo-1486911278844-a81c5267e227'), image('photo-1500534623283-312aade485b7')], latitude: 29.9782, longitude: 76.5876, durationMinutes: 80,
-    tags: ['river', 'memory', 'market', 'ritual', 'walking'], experienceTypes: ['Deep Historical', 'Quiet & Authentic', 'Local Stories' as never], verifiedStatus: 'Research needed',
+    tags: ['river', 'memory', 'market', 'ritual', 'walking'], experienceTypes: ['Deep Historical', 'Quiet & Authentic', 'Local Stories' as never], verifiedStatus: 'Research needed', isHidden: true, hiddenReason: 'Less-known in our prototype dataset; local access and context vary.',
   },
   {
     id: 'heritage-ragini-haryana', regionId: haryana.id, regionName: haryana.name, name: 'Ragini on the Village Stage', slug: 'ragini-village-stage', category: 'Folk Culture',
@@ -95,7 +95,7 @@ export const heritage: HeritageLocation[] = [
     historicalContext: 'This entry describes a living folk form in broad terms. A future version should be shaped with performers and community archives.',
     livingToday: 'Look for community events rather than staged imitations, and support performers directly where possible.',
     image: image('photo-1506157786151-b8491531f063'), gallery: [image('photo-1514525253161-7a46d19cd819')], latitude: 29.6857, longitude: 76.9905, durationMinutes: 120,
-    tags: ['music', 'performance', 'oral history', 'community'], experienceTypes: ['Cultural & Social', 'Local Stories' as never, 'Photography'], verifiedStatus: 'Research needed',
+    tags: ['music', 'performance', 'oral history', 'community'], experienceTypes: ['Cultural & Social', 'Local Stories' as never, 'Photography'], verifiedStatus: 'Research needed', isHidden: true, hiddenReason: 'Less-known in our prototype dataset; event timing and access vary.',
   },
   {
     id: 'heritage-braj-sanjhi', regionId: braj.id, regionName: braj.name, name: 'Braj’s Paper Sanjhi', slug: 'braj-paper-sanjhi', category: 'Craft',
@@ -105,7 +105,7 @@ export const heritage: HeritageLocation[] = [
     historicalContext: 'Traditions of Sanjhi have multiple lineages. This prototype keeps the description intentionally grounded and open to practitioner review.',
     livingToday: 'Ask whether a work is intended for ritual or sale, and follow the maker’s lead when discussing sacred motifs.',
     image: image('photo-1577083552431-6e5fd01d8e99'), gallery: [image('photo-1561214115-f2f134cc4912')], latitude: 27.5054, longitude: 77.6737, durationMinutes: 95,
-    tags: ['paper', 'devotion', 'fine work', 'motif'], experienceTypes: ['Quiet & Authentic', 'Photography', 'Cultural & Social'], verifiedStatus: 'Research needed',
+    tags: ['paper', 'devotion', 'fine work', 'motif'], experienceTypes: ['Quiet & Authentic', 'Photography', 'Cultural & Social'], verifiedStatus: 'Research needed', isHidden: true, hiddenReason: 'Less-known in our prototype dataset; ask practitioners about ritual context.',
   },
   {
     id: 'heritage-marwar-water', regionId: marwar.id, regionName: marwar.name, name: 'Stepwells and Water Memory', slug: 'marwar-stepwells-water-memory', category: 'Community Practice',
@@ -115,7 +115,7 @@ export const heritage: HeritageLocation[] = [
     historicalContext: 'Stepwells across Rajasthan differ in age, patronage and condition. Site-specific verification is essential.',
     livingToday: 'Take only photographs, never climb restricted edges and ask residents how the water system relates to the present town.',
     image: image('photo-1599661046289-e31897846e41'), gallery: [image('photo-1599661046289-e31897846e41')], latitude: 26.3022, longitude: 73.0172, durationMinutes: 70,
-    tags: ['water', 'climate', 'stone', 'engineering', 'community'], experienceTypes: ['Deep Historical', 'Photography', 'Quiet & Authentic'], verifiedStatus: 'Demonstration content',
+    tags: ['water', 'climate', 'stone', 'engineering', 'community'], experienceTypes: ['Deep Historical', 'Photography', 'Quiet & Authentic'], verifiedStatus: 'Demonstration content', isHidden: true, hiddenReason: 'Less-known in our prototype dataset; site-specific verification is needed.',
   },
   {
     id: 'heritage-malabar-kitchen', regionId: malabar.id, regionName: malabar.name, name: 'Malabar’s Spice Route Kitchen', slug: 'malabar-spice-route-kitchen', category: 'Food',
@@ -135,8 +135,17 @@ export const heritage: HeritageLocation[] = [
     historicalContext: 'Phulkari practices span communities and regions. This demo entry avoids assigning a single origin story.',
     livingToday: 'Buy directly from makers when possible and ask about the time behind the work.',
     image: image('photo-1558618666-fcd25c85cd64'), gallery: [image('photo-1525507119028-ed4c629a60a3')], latitude: 29.1492, longitude: 75.7217, durationMinutes: 75,
-    tags: ['textile', 'embroidery', 'family', 'memory', 'craft'], experienceTypes: ['Quiet & Authentic', 'Cultural & Social', 'Photography'], verifiedStatus: 'Community source',
+    tags: ['textile', 'embroidery', 'family', 'memory', 'craft'], experienceTypes: ['Quiet & Authentic', 'Cultural & Social', 'Photography'], verifiedStatus: 'Community source', isHidden: true, hiddenReason: 'Less-known in our prototype dataset; availability depends on maker schedules.',
   },
+]
+
+export const hiddenHeritage = heritage.filter((item) => item.isHidden)
+
+export const recognitionExamples: RecognitionExample[] = [
+  { id: 'demo-pipli', label: 'Pipli appliqué textile', heritageSlug: heritage[1].slug, image: heritage[1].image, keywords: ['pipli', 'applique', 'textile', 'fabric', 'craft'] },
+  { id: 'demo-sanjhi', label: 'Braj paper Sanjhi', heritageSlug: heritage[6].slug, image: heritage[6].image, keywords: ['sanjhi', 'paper', 'braj', 'stencil'] },
+  { id: 'demo-stepwell', label: 'Marwar water architecture', heritageSlug: heritage[7].slug, image: heritage[7].image, keywords: ['stepwell', 'water', 'marwar', 'stone'] },
+  { id: 'demo-phulkari', label: 'Phulkari memory textile', heritageSlug: heritage[9].slug, image: heritage[9].image, keywords: ['phulkari', 'embroidery', 'thread', 'textile'] },
 ]
 
 export const artisans: Artisan[] = [

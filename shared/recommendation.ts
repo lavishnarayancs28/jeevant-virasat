@@ -16,22 +16,28 @@ const interestCategories: Record<string, string[]> = {
   'Folk Culture': ['Folk Culture', 'Festival', 'Community Practice'],
   Photography: ['Architecture', 'Craft', 'Local History', 'Sacred Tradition'],
   'Local Stories': ['Local History', 'Community Practice', 'Folk Culture', 'Food'],
+  'Local Food': ['Food'],
+  'Living Traditions': ['Folk Culture', 'Community Practice', 'Sacred Tradition', 'Festival'],
+  'Spiritual/Cultural': ['Sacred Tradition', 'Community Practice'],
 }
 
 export function validateTrailRequest(input: unknown): TrailRequest {
   if (!input || typeof input !== 'object') throw new Error('Trail preferences are required.')
   const candidate = input as Partial<TrailRequest>
   const validTimes = Object.keys(timeBudgets)
-  const validExperiences = ['Quiet & Authentic', 'Cultural & Social', 'Food-focused', 'Photography', 'Deep Historical', 'Local Stories']
+  const validExperiences = ['Quiet & Authentic', 'Cultural & Social', 'Food-focused', 'Photography', 'Deep Historical', 'Local Stories', 'Quiet & Slow', 'Food & Craft', 'History & Stories', 'Family Friendly']
+  const validCrowdPreferences = ['Popular', 'Balanced', 'Hidden Gems']
   if (!Array.isArray(candidate.interests) || candidate.interests.length === 0) throw new Error('Choose at least one interest.')
   if (!candidate.timeChoice || !validTimes.includes(candidate.timeChoice)) throw new Error('Choose a valid time window.')
   if (!candidate.experienceType || !validExperiences.includes(candidate.experienceType)) throw new Error('Choose an experience preference.')
   if (typeof candidate.regionSlug !== 'string' || !candidate.regionSlug.trim()) throw new Error('Choose a region.')
+  if (candidate.crowdPreference && !validCrowdPreferences.includes(candidate.crowdPreference)) throw new Error('Choose a valid crowd preference.')
   return {
     interests: candidate.interests.filter((value): value is string => typeof value === 'string').slice(0, 8),
     timeChoice: candidate.timeChoice,
     experienceType: candidate.experienceType,
     regionSlug: candidate.regionSlug,
+    crowdPreference: candidate.crowdPreference,
   }
 }
 
@@ -45,8 +51,10 @@ function scoreLocation(location: HeritageLocation, request: TrailRequest) {
   const experienceMatch = location.experienceTypes.includes(request.experienceType) ? 1 : 0
   const durationFit = location.durationMinutes <= timeBudgets[request.timeChoice] ? 1 : 0
   const regionMatch = location.regionId === request.regionSlug || location.regionId.endsWith(request.regionSlug) ? 1 : 0
-  const score = categoryMatch * 5 + (categoryMatch ? 4 : 0) + tagMatch * 3 + durationFit * 3 + experienceMatch * 2 + regionMatch * 2
-  return { score, categoryMatch, tagMatch, experienceMatch, durationFit, regionMatch }
+  const hiddenMatch = location.isHidden ? 1 : 0
+  const crowdMatch = request.crowdPreference === 'Hidden Gems' ? hiddenMatch : request.crowdPreference === 'Popular' ? (hiddenMatch ? 0 : 1) : 0
+  const score = categoryMatch * 5 + (categoryMatch ? 4 : 0) + tagMatch * 3 + durationFit * 3 + experienceMatch * 2 + regionMatch * 2 + crowdMatch * 4
+  return { score, categoryMatch, tagMatch, experienceMatch, durationFit, regionMatch, hiddenMatch }
 }
 
 export function generateTrail(request: TrailRequest, locations: HeritageLocation[], regionName: string): Trail {
@@ -61,16 +69,25 @@ export function generateTrail(request: TrailRequest, locations: HeritageLocation
   for (const item of ranked) {
     if (selected.length >= 5) break
     if (usedMinutes + item.location.durationMinutes > budget) continue
-    const relevantInterest = request.interests.find((interest) => {
+    const relevantInterests = request.interests.filter((interest) => {
       const categories = interestCategories[interest] ?? []
       return categories.includes(item.location.category) || item.location.tags.some((tag) => tag.toLowerCase().includes(interest.toLowerCase().replace('local ', '')))
     })
+    const interestSummary = request.interests.slice(0, 3).join(' + ')
+    const crowdSummary = request.crowdPreference === 'Hidden Gems'
+      ? ' and prefer hidden experiences'
+      : request.crowdPreference === 'Popular'
+        ? ' and prefer popular places'
+        : request.crowdPreference === 'Balanced'
+          ? ' and prefer a balanced mix'
+          : ''
     selected.push({
       ...item.location,
-      matchReason: relevantInterest
-        ? `Matches your interest in ${relevantInterest.toLowerCase()} through ${item.location.category.toLowerCase()}.`
-        : `A complementary ${item.location.category.toLowerCase()} stop for the pace you chose.`,
+      matchReason: relevantInterests.length
+        ? `Recommended because you selected ${interestSummary}${crowdSummary}. This stop brings those interests into ${item.location.category.toLowerCase()}.`
+        : `Recommended as a complementary ${item.location.category.toLowerCase()} stop for the pace you chose${crowdSummary}.`,
       distanceFromPreviousKm: selected.length ? Math.round((3.2 + selected.length * 1.7) * 10) / 10 : undefined,
+      culturalContext: item.location.culturalSignificance,
     })
     usedMinutes += item.location.durationMinutes
   }
@@ -86,6 +103,8 @@ export function generateTrail(request: TrailRequest, locations: HeritageLocation
     timeChoice: request.timeChoice,
     stops: selected,
     createdAt: new Date().toISOString(),
+    crowdPreference: request.crowdPreference,
+    aiAssisted: true,
   }
 }
 

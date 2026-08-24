@@ -10,13 +10,18 @@ export type HeritageCategory =
 
 export type ExperienceType =
   | 'Quiet & Authentic'
+  | 'Quiet & Slow'
   | 'Cultural & Social'
   | 'Food-focused'
+  | 'Food & Craft'
   | 'Photography'
   | 'Deep Historical'
+  | 'History & Stories'
+  | 'Family Friendly'
   | 'Local Stories'
 
 export type TrailTime = '2 hours' | 'Half day' | 'Full day' | 'Weekend'
+export type CrowdPreference = 'Popular' | 'Balanced' | 'Hidden Gems'
 
 export interface Region {
   id: string
@@ -50,6 +55,8 @@ export interface HeritageLocation {
   tags: string[]
   experienceTypes: ExperienceType[]
   verifiedStatus: 'Demonstration content' | 'Community source' | 'Research needed'
+  isHidden?: boolean
+  hiddenReason?: string
 }
 
 export interface Artisan {
@@ -68,6 +75,8 @@ export interface Artisan {
   specialties: string[]
   relatedHeritageIds: string[]
   contactMethod: string
+  workshopAvailability?: string
+  skills?: string[]
 }
 
 export interface Story {
@@ -95,11 +104,14 @@ export interface Trail {
   timeChoice: TrailTime
   stops: TrailStop[]
   createdAt: string
+  crowdPreference?: CrowdPreference
+  aiAssisted?: boolean
 }
 
 export interface TrailStop extends HeritageLocation {
   matchReason: string
   distanceFromPreviousKm?: number
+  culturalContext?: string
 }
 
 export interface SearchResults {
@@ -114,4 +126,30 @@ export interface TrailRequest {
   timeChoice: TrailTime
   experienceType: ExperienceType
   regionSlug: string
+  crowdPreference?: CrowdPreference
+}
+
+export interface ImpactMetrics {
+  heritageEntries: number
+  artisanProfiles: number
+  culturalStories: number
+  regionsRepresented: number
+  livingTraditions: number
+  hiddenHeritageEntries: number
+}
+
+export interface RecognitionExample {
+  id: string
+  label: string
+  heritageSlug: string
+  image: string
+  keywords: string[]
+}
+
+export interface HeritageRecognitionResult {
+  matched: boolean
+  message: string
+  confidence: 'prototype match' | 'unmatched'
+  identified?: HeritageLocation
+  nearby: HeritageLocation[]
 }

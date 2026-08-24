@@ -2,9 +2,10 @@ import express from 'express'
 import { createServer } from 'node:http'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { artisans, heritage, regions, sampleTrails, stories } from '../shared/data'
+import { artisans, heritage, hiddenHeritage, regions, sampleTrails, stories } from '../shared/data'
 import type { Artisan, HeritageLocation, Region, Story } from '../shared/types'
 import { generateTrail, validateTrailRequest } from './recommendation'
+import { identifyHeritage } from '../shared/recognition'
 
 const app = express()
 const port = Number(process.env.PORT ?? 8787)
@@ -38,12 +39,14 @@ app.get('/api/heritage', (req, res) => {
   const category = queryText(req.query.category)
   const duration = queryText(req.query.duration)
   const sort = queryText(req.query.sort)
+  const mode = queryText(req.query.mode)
   let result = heritage.filter((item) => {
     const matchesRegion = !region || item.regionId.endsWith(region) || item.regionName.toLowerCase() === region
     const matchesCategory = !category || item.category.toLowerCase() === category
     const matchesSearch = !search || matchesText(item, search)
     const matchesDuration = !duration || (duration === 'short' ? item.durationMinutes <= 90 : duration === 'medium' ? item.durationMinutes <= 180 : item.durationMinutes > 180)
-    return matchesRegion && matchesCategory && matchesSearch && matchesDuration
+    const matchesMode = !mode || (mode === 'living' ? ['Folk Culture', 'Community Practice', 'Sacred Tradition', 'Festival'].includes(item.category) : mode === 'food' ? item.category === 'Food' : true)
+    return matchesRegion && matchesCategory && matchesSearch && matchesDuration && matchesMode
   })
   if (sort === 'duration') result = [...result].sort((a, b) => a.durationMinutes - b.durationMinutes)
   if (sort === 'name') result = [...result].sort((a, b) => a.name.localeCompare(b.name))
@@ -52,6 +55,18 @@ app.get('/api/heritage', (req, res) => {
 app.get('/api/heritage/:slug', (req, res) => {
   const item = bySlug(heritage, req.params.slug)
   return item ? res.json(ok(item)) : res.status(404).json(fail('Heritage location not found.', 404))
+})
+
+app.get('/api/hidden-heritage', (req, res) => {
+  const search = queryText(req.query.search)
+  const region = queryText(req.query.region)
+  const category = queryText(req.query.category)
+  const result = hiddenHeritage.filter((item) => {
+    const matchesRegion = !region || item.regionId.endsWith(region) || item.regionName.toLowerCase() === region
+    const matchesCategory = !category || item.category.toLowerCase() === category
+    return matchesRegion && matchesCategory && (!search || matchesText(item, search))
+  })
+  return res.json(ok(result))
 })
 
 app.get('/api/artisans', (req, res) => {
@@ -85,6 +100,23 @@ app.get('/api/search', (req, res) => {
     stories: stories.filter((item) => matchesText(item, search)).slice(0, 6),
     regions: regions.filter((item) => matchesText(item, search)).slice(0, 6),
   }))
+})
+
+app.get('/api/impact', (_req, res) => res.json(ok({
+  heritageEntries: heritage.length,
+  artisanProfiles: artisans.length,
+  culturalStories: stories.length,
+  regionsRepresented: new Set(heritage.map((item) => item.regionId)).size,
+  livingTraditions: heritage.filter((item) => ['Folk Culture', 'Community Practice', 'Sacred Tradition'].includes(item.category)).length,
+  hiddenHeritageEntries: hiddenHeritage.length,
+})))
+
+app.post('/api/heritage/identify', (req, res) => {
+  try {
+    return res.json(ok(identifyHeritage(req.body)))
+  } catch {
+    return res.status(400).json(fail('Could not process this prototype image.'))
+  }
 })
 
 app.post('/api/trails/generate', (req, res) => {
