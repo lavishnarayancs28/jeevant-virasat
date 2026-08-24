@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc">
+  <title id="title">Panipat Museum prototype placeholder</title>
+  <desc id="desc">An illustrated museum facade placeholder while documentary image reuse is verified.</desc>
+  <rect width="1200" height="760" fill="#e8dfd0"/>
+  <rect y="520" width="1200" height="240" fill="#234b4b"/>
+  <rect x="130" y="260" width="940" height="260" rx="8" fill="#c77852"/>
+  <rect x="180" y="315" width="840" height="205" fill="#f4eee4"/>
+  <path d="M115 260 600 120l485 140Z" fill="#234b4b"/>
+  <path d="M245 315v205M395 315v205M545 315v205M695 315v205M845 315v205" stroke="#c77852" stroke-width="22"/>
+  <path d="M265 420h90v100h-90zM415 420h90v100h-90zM565 420h90v100h-90zM715 420h90v100h-90zM865 420h90v100h-90z" fill="#e8a675"/>
+  <text x="600" y="70" text-anchor="middle" fill="#234b4b" font-family="Georgia,serif" font-size="42">PANIPAT MUSEUM</text>
+  <text x="600" y="665" text-anchor="middle" fill="#f4eee4" font-family="Arial,sans-serif" font-size="28" letter-spacing="4">PROTOTYPE IMAGE · VERIFY REUSE</text>
+</svg>

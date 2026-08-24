@@ -29,7 +29,7 @@ export function FavoriteButton({ favorite, active, onToggle }: { favorite: Favor
 export function HeritageCard({ item, favorite, compact = false, showHiddenNote = false }: { item: HeritageLocation; favorite?: { active: boolean; onToggle: (favorite: FavoriteRecord) => void }; compact?: boolean; showHiddenNote?: boolean }) {
   const record: FavoriteRecord = { kind: 'heritage', id: item.id, label: item.name, href: `/heritage/${item.slug}`, image: item.image }
   return <article className={`heritage-card ${compact ? 'compact' : ''}`}>
-    <Link to={`/heritage/${item.slug}`} aria-label={`Read ${item.name}`}><ImageFrame src={item.image} alt="" className="card-image" /></Link>
+      <Link to={`/heritage/${item.slug}`} aria-label={`Read ${item.name}`}><ImageFrame src={item.image} alt={`${item.name}, ${item.district}, ${item.state}`} className="card-image" /></Link>
     <div className="card-body"><div className="card-meta"><Tag>{item.category}</Tag><span><Clock3 size={13} /> {item.durationMinutes} min</span></div>
       <Link to={`/heritage/${item.slug}`}><h3>{item.name}</h3></Link><p>{item.shortDescription}</p>{showHiddenNote && item.isHidden && <div className="hidden-card-note"><strong>Why explore this?</strong><span>{item.hiddenReason ?? 'Less-known in our prototype dataset.'}</span></div>}
       <div className="card-footer"><span className="muted"><MapPin size={13} /> {item.regionName}</span>{favorite && <FavoriteButton favorite={record} active={favorite.active} onToggle={favorite.onToggle} />}</div>
@@ -39,12 +39,12 @@ export function HeritageCard({ item, favorite, compact = false, showHiddenNote =
 
 export function ArtisanCard({ item, favorite }: { item: Artisan; favorite?: { active: boolean; onToggle: (favorite: FavoriteRecord) => void } }) {
   const record: FavoriteRecord = { kind: 'artisan', id: item.id, label: item.name, href: `/artisans/${item.slug}`, image: item.profileImage }
-  return <article className="artisan-card"><Link to={`/artisans/${item.slug}`}><ImageFrame src={item.profileImage} alt={`Prototype image for ${item.craft}; no person depicted`} className="portrait-image" /></Link><div className="card-body"><div className="card-meta"><Tag tone="success">Prototype record</Tag></div><span className="card-kicker">{item.craft}</span><Link to={`/artisans/${item.slug}`}><h3>{item.name}</h3></Link><p>{item.biography}</p><div className="card-footer"><span className="muted"><MapPin size={13} /> {item.location}</span>{favorite && <FavoriteButton favorite={record} active={favorite.active} onToggle={favorite.onToggle} />}</div></div></article>
+    return <article className="artisan-card"><Link to={`/artisans/${item.slug}`}><ImageFrame src={item.profileImage} alt={`Prototype image for ${item.craft}; no person depicted`} className="portrait-image" /></Link><div className="card-body"><div className="card-meta"><Tag tone="success">{item.prototypeStatus}</Tag></div><span className="card-kicker">{item.craft}</span><Link to={`/artisans/${item.slug}`}><h3>{item.name}</h3></Link><p>{item.biography}</p><div className="card-footer"><span className="muted"><MapPin size={13} /> {item.location}</span>{favorite && <FavoriteButton favorite={record} active={favorite.active} onToggle={favorite.onToggle} />}</div></div></article>
 }
 
 export function StoryCard({ item, favorite }: { item: Story; favorite?: { active: boolean; onToggle: (favorite: FavoriteRecord) => void } }) {
   const record: FavoriteRecord = { kind: 'story', id: item.id, label: item.title, href: `/stories/${item.slug}`, image: item.image }
-  return <article className="story-card"><Link to={`/stories/${item.slug}`}><ImageFrame src={item.image} alt="" className="card-image" /></Link><div className="card-body"><span className="card-kicker">{item.category} · {item.regionName}</span><Link to={`/stories/${item.slug}`}><h3>{item.title}</h3></Link><p>{item.excerpt}</p>{favorite && <FavoriteButton favorite={record} active={favorite.active} onToggle={favorite.onToggle} />}</div></article>
+  return <article className="story-card"><Link to={`/stories/${item.slug}`}><ImageFrame src={item.image} alt={`${item.title}, ${item.regionName}`} className="card-image" /></Link><div className="card-body"><span className="card-kicker">{item.category} · {item.regionName}</span><Link to={`/stories/${item.slug}`}><h3>{item.title}</h3></Link><p>{item.excerpt}</p>{favorite && <FavoriteButton favorite={record} active={favorite.active} onToggle={favorite.onToggle} />}</div></article>
 }
 
 export function MatchNote({ children }: { children: React.ReactNode }) { return <div className="match-note"><Sparkles size={15} /><span>{children}</span><Check size={15} /></div> }
