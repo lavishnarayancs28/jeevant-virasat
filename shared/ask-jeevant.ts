@@ -19,6 +19,7 @@ function normalize(question: string) {
 
 export function detectAskIntent(question: string): AskIntent {
   const value = normalize(question)
+  if (/(good time|visit now|visit today|should i visit|traffic|journey|travel conditions|अभी जाएँ|यात्रा|यातायात)/.test(value)) return 'TRAVEL_CONDITIONS'
   if (/\bwhy\b|\bimportant\b|\bsignificance\b|महत्व|क्यों|महत्त्व/.test(value)) return 'WHY_IMPORTANT'
   if (/\bstory\b|\bhistory\b|\btell me\b|कहानी|कथा|इतिहास|बताओ/.test(value)) return 'STORY'
   if (/\bnearby\b|\baround\b|\bclose\b|\bexplore\b|पास|आसपास|नज़दीक|करीब/.test(value)) return 'NEARBY'
@@ -104,7 +105,14 @@ export function answerAskJeevant(input: AskJeevantRequest, heritage: HeritageLoc
   let weatherContext: WeatherObservation | undefined
   let suggestedTiming: string | undefined
 
-  if (intent === 'WHY_IMPORTANT') {
+  if (intent === 'TRAVEL_CONDITIONS') {
+    const conditions = input.travelConditions
+    const weather = conditions?.weather.status === 'LIVE' ? conditions.weather : undefined
+    const traffic = conditions?.traffic.status === 'LIVE' ? conditions.traffic : undefined
+    const weatherText = weather ? `Live weather is ${weather.condition ?? 'available'}${weather.temperature === undefined ? '' : ` at ${weather.temperature}°C`}.` : 'Live weather is unavailable.'
+    const trafficText = traffic ? `Live traffic is ${traffic.condition ?? 'available'}${traffic.estimatedTravelMinutes === undefined ? '' : ` with an estimated ${traffic.estimatedTravelMinutes}-minute journey`}.` : 'Live traffic unavailable.'
+    answers = localizedPair(`${nameEn} can be considered using current information. ${weatherText} ${trafficText} ${conditions?.recommendation ?? 'Live travel information is unavailable, so check conditions locally before leaving.'}`, `${nameHi} के लिए वर्तमान जानकारी के आधार पर विचार किया जा सकता है। ${weather ? 'लाइव मौसम उपलब्ध है।' : 'लाइव मौसम उपलब्ध नहीं है।'} ${traffic ? 'लाइव यातायात उपलब्ध है।' : 'लाइव यातायात उपलब्ध नहीं है।'} ${conditions?.recommendation ?? 'लाइव यात्रा जानकारी उपलब्ध नहीं है, इसलिए निकलने से पहले स्थानीय स्थिति जाँचें।'}`)
+  } else if (intent === 'WHY_IMPORTANT') {
     answers = localizedPair(
       `${nameEn} matters in the current prototype dataset because ${text(current, 'culturalSignificance', 'en')}`,
       `${nameHi} का महत्व वर्तमान प्रोटोटाइप डेटा में इसलिए है क्योंकि ${text(current, 'culturalSignificance', 'hi')}`,
@@ -170,6 +178,7 @@ export function answerAskJeevant(input: AskJeevantRequest, heritage: HeritageLoc
     relatedArtisanIds,
     ...(foodRecordIds.length ? { foodRecordIds } : {}),
     ...(weatherContext ? { weatherContext } : {}),
+    ...(input.travelConditions ? { travelConditions: input.travelConditions } : {}),
     ...(suggestedTiming ? { suggestedTiming } : {}),
     ...(responseTrail ? { trailRequest: responseTrail } : {}),
   }

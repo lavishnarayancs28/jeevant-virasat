@@ -21,6 +21,8 @@ import { MediaService } from './integrations/media'
 import { NotificationService } from './integrations/notifications'
 import { PaymentsService } from './integrations/payments'
 import { WeatherService } from './integrations/weather'
+import { TrafficService } from './integrations/traffic'
+import type { HeritageLocation, TravelConditions } from '../shared/types'
 
 export type AppDependencies = { config?: AppConfig; db?: Database; repository?: ContentRepository }
 
@@ -74,11 +76,27 @@ export function createApp(dependencies: AppDependencies = {}) {
   const platform = new PlatformService(db)
   const audit = new AuditService(db)
   const weather = new WeatherService(config)
+  const traffic = new TrafficService(config)
   const ai = new AiService(config)
   const media = new MediaService(config)
   const payments = new PaymentsService(config)
   const notifications = new NotificationService(config)
   const app = express()
+
+  async function conditionsFor(item: HeritageLocation, query?: Record<string, unknown>): Promise<TravelConditions> {
+    const weatherResult = await weather.get(item.latitude, item.longitude)
+    const trafficResult = await traffic.get(item.latitude, item.longitude, query?.originLatitude, query?.originLongitude)
+    const weatherLive = weatherResult.weather.status === 'LIVE'
+    const trafficLive = trafficResult.traffic.status === 'LIVE'
+    const recommendation = !weatherLive && !trafficLive
+      ? 'Live weather and traffic are unavailable. Check local conditions before leaving.'
+      : !weatherLive || !trafficLive
+        ? 'Some live travel information is unavailable. Check local conditions before leaving.'
+        : (weatherResult.weather.status === 'LIVE' && /rain|storm|snow/i.test(weatherResult.weather.condition ?? '')) || (trafficResult.traffic.status === 'LIVE' && (trafficResult.traffic.delayMinutes ?? 0) > 15)
+          ? 'Consider visiting later. Current conditions may make the journey less convenient.'
+          : 'Current weather and traffic information suggest this may be a convenient time to visit.'
+    return { destination: { id: item.id, name: item.name, latitude: item.latitude, longitude: item.longitude, district: item.district, state: item.state, coordinateNote: item.coordinateNote }, weather: weatherResult.weather, traffic: trafficResult.traffic, recommendation, retrievedAt: new Date().toISOString() }
+  }
 
   app.set('trust proxy', 1)
   app.use(requestId)
@@ -103,6 +121,11 @@ export function createApp(dependencies: AppDependencies = {}) {
     const provenance = await repository.getProvenance('heritage', param(req, 'id'))
     if (!provenance) throw ApiError.notFound('Heritage provenance not found.')
     return res.json(ok(provenance))
+  }))
+  app.get('/api/heritage/:id/conditions', asyncHandler(async (req, res) => {
+    const item = await repository.getHeritage(param(req, 'id'))
+    if (!item) throw ApiError.notFound('Heritage location not found.')
+    return res.json(ok(await conditionsFor(item, req.query as Record<string, unknown>)))
   }))
   app.get('/api/heritage/:id', asyncHandler(async (req, res) => {
     const item = await repository.getHeritage(param(req, 'id'))
@@ -178,9 +201,9 @@ export function createApp(dependencies: AppDependencies = {}) {
   app.post('/api/food/recommendations', asyncHandler(async (req, res) => { const language = req.body?.language === 'hi' ? 'hi' : 'en'; return res.json(ok(recommendWeatherFood(req.body?.weather, await repository.listFood(), language))) }))
 
   app.post('/api/heritage/identify', asyncHandler(async (req, res) => { try { return res.json(ok(identifyHeritage(req.body))) } catch { throw ApiError.badRequest('Could not process this prototype image.', 'IDENTIFICATION_INVALID') } }))
-  app.post('/api/ask-jeevant', asyncHandler(async (req, res) => { try { const [heritageItems, storyItems, artisanItems] = await Promise.all([repository.listHeritage(), repository.listStories(), repository.listArtisans()]); return res.json(ok({ ...answerAskJeevant(req.body, heritageItems, storyItems, artisanItems), ai: ai.status })) } catch { throw ApiError.badRequest('Ask Jeevant could not use this context.', 'ASK_CONTEXT_INVALID') } }))
+  app.post('/api/ask-jeevant', asyncHandler(async (req, res) => { try { const [heritageItems, storyItems, artisanItems] = await Promise.all([repository.listHeritage(), repository.listStories(), repository.listArtisans()]); const current = heritageItems.find((item) => item.id === req.body?.heritageId || item.slug === req.body?.heritageId); const travelConditions = current ? await conditionsFor(current) : undefined; return res.json(ok({ ...answerAskJeevant({ ...req.body, ...(travelConditions ? { travelConditions } : {}) }, heritageItems, storyItems, artisanItems), ai: ai.status })) } catch { throw ApiError.badRequest('Ask Jeevant could not use this context.', 'ASK_CONTEXT_INVALID') } }))
 
-  app.post('/api/trails/generate', asyncHandler(async (req, res) => { const request = validateTrailRequest(req.body); const region = await repository.getRegion(request.regionSlug); if (!region) throw ApiError.badRequest('Choose a supported region.'); const trail = generateTrail({ ...request, regionSlug: region.id }, await repository.listHeritage(), region.name); await repository.saveTrail(trail, req.user?.id); return res.json(ok(trail)) }))
+  app.post('/api/trails/generate', asyncHandler(async (req, res) => { const request = validateTrailRequest(req.body); const region = await repository.getRegion(request.regionSlug); if (!region) throw ApiError.badRequest('Choose a supported region.'); const trail = generateTrail({ ...request, regionSlug: region.id }, await repository.listHeritage(), region.name); const enriched = { ...trail, stops: await Promise.all(trail.stops.map(async (stop) => { const travelConditions = await conditionsFor(stop); const weather = travelConditions.weather.status === 'LIVE' ? `Weather: ${travelConditions.weather.temperature === undefined ? travelConditions.weather.condition ?? 'available' : `${travelConditions.weather.temperature}°C`}` : 'Weather: unavailable'; const traffic = travelConditions.traffic.status === 'LIVE' ? `Traffic: ${travelConditions.traffic.condition ?? 'available'}` : 'Traffic: unavailable'; return { ...stop, matchReason: `${stop.matchReason} ${weather}. ${traffic}.`, travelConditions } })) }; await repository.saveTrail(enriched, req.user?.id); return res.json(ok(enriched)) }))
   app.get('/api/trails/:id', asyncHandler(async (req, res) => { const trail = await repository.getTrail(param(req, 'id')); if (!trail) throw ApiError.notFound('Trail not found.'); return res.json(ok(trail)) }))
   app.post('/api/trails', requireAuth(), asyncHandler(async (req, res) => { const request = validateTrailRequest(req.body); const region = await repository.getRegion(request.regionSlug); if (!region) throw ApiError.badRequest('Choose a supported region.'); const trail = generateTrail({ ...request, regionSlug: region.id }, await repository.listHeritage(), region.name); await repository.saveTrail(trail, req.user!.id); await audit.record({ actorUserId: req.user!.id, action: 'CREATE', entityType: 'trail', entityId: trail.id }); return res.status(201).json(ok(trail)) }))
   app.delete('/api/trails/:id', requireAuth(), asyncHandler(async (req, res) => { const trailId = param(req, 'id'); if (!await repository.deleteTrail(trailId, req.user!.id)) throw ApiError.notFound('Trail not found or not owned by this user.'); await audit.record({ actorUserId: req.user!.id, action: 'DELETE', entityType: 'trail', entityId: trailId }); return res.status(204).end() }))

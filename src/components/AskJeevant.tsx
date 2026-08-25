@@ -9,6 +9,7 @@ import { apiRequest } from '../lib/api'
 import { AudioStoryPlayer } from './AudioStoryPlayer'
 import { FoodCard } from './FoodCard'
 import { CTAButton, HeritageCard, StatusNotice, Tag } from './Shared'
+import { TravelConditions } from './TravelConditions'
 
 const suggestedQuestions = [
   { en: 'Why is this place important?', hi: 'यह जगह महत्वपूर्ण क्यों है?', value: 'Why is this place important?' },
@@ -59,6 +60,7 @@ export function AskJeevant({ item }: { item: HeritageLocation }) {
   }
 
   return <>
+    <TravelConditions item={item} />
     <button type="button" className="button secondary ask-trigger" onClick={() => setOpen(true)}><Sparkles size={16} /> {t('ask.button')}</button>
     {open && <div className="modal-backdrop ask-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setOpen(false) }}>
       <section className="ask-panel" role="dialog" aria-modal="true" aria-labelledby="ask-jeevant-title">

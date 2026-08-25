@@ -160,6 +160,15 @@ paths:
       security: []
       parameters: [{ name: latitude, in: query, schema: { type: number } }, { name: longitude, in: query, schema: { type: number } }]
       responses: { '200': { description: Live weather or an explicit unavailable fallback } }
+  /heritage/{id}/conditions:
+    get:
+      tags: [Public content]
+      security: []
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+        - { name: originLatitude, in: query, schema: { type: number } }
+        - { name: originLongitude, in: query, schema: { type: number } }
+      responses: { '200': { description: Destination-scoped weather and traffic conditions with provider status }, '404': { $ref: '#/components/responses/NotFound' } }
   /ask-jeevant:
     post:
       tags: [Public content]

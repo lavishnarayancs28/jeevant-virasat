@@ -46,6 +46,13 @@ describe('Ask Jeevant grounded service', () => {
     expect(fallback.confidence).toBe('fallback')
     expect(fallback.answer).toContain("I don't have enough verified information")
   })
+
+  it('acknowledges unavailable live travel conditions without inventing values', () => {
+    const response = answerAskJeevant({ question: 'Is it a good time to visit this place?', heritageId: current.id, travelConditions: { weather: { status: 'UNAVAILABLE' }, traffic: { status: 'UNAVAILABLE' }, recommendation: 'Live weather and traffic are unavailable.' } }, heritage, stories, artisans)
+    expect(response.intent).toBe('TRAVEL_CONDITIONS')
+    expect(response.answer).toContain('Live weather is unavailable')
+    expect(response.answer).toContain('Live traffic unavailable')
+  })
 })
 
 describe('Audio narration fallback helpers', () => {

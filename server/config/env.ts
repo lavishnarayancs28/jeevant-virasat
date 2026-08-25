@@ -12,6 +12,9 @@ export type AppConfig = {
   requireDatabase: boolean
   requireProductionConfig: boolean
   weatherApiKey?: string
+  weatherProvider?: string
+  trafficApiKey?: string
+  trafficProvider?: string
   aiApiKey?: string
   storageBucket?: string
   storageAccessKey?: string
@@ -56,6 +59,9 @@ export function loadConfig(environment: NodeJS.ProcessEnv = process.env): AppCon
     requireDatabase: environment.REQUIRE_DATABASE === 'true',
     requireProductionConfig: productionConfigRequired,
     weatherApiKey: optional(environment.WEATHER_API_KEY),
+    weatherProvider: optional(environment.WEATHER_PROVIDER) ?? 'openweathermap',
+    trafficApiKey: optional(environment.TRAFFIC_API_KEY),
+    trafficProvider: optional(environment.TRAFFIC_PROVIDER),
     aiApiKey: optional(environment.AI_API_KEY ?? environment.LLM_API_KEY),
     storageBucket: optional(environment.STORAGE_BUCKET),
     storageAccessKey: optional(environment.STORAGE_ACCESS_KEY),
@@ -73,6 +79,7 @@ export function safeConfigSummary(config: AppConfig) {
     databaseConfigured: Boolean(config.databaseUrl),
     sessionSecretConfigured: !config.sessionSecretEphemeral,
     weatherConfigured: Boolean(config.weatherApiKey),
+    trafficConfigured: Boolean(config.trafficApiKey && config.trafficProvider),
     aiConfigured: Boolean(config.aiApiKey),
     storageConfigured: Boolean(config.storageBucket),
     paymentsConfigured: Boolean(config.paymentSecretKey),

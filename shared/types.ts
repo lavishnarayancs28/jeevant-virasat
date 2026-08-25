@@ -219,6 +219,40 @@ export interface WeatherObservation {
   source?: 'live' | 'user-provided' | 'unavailable'
 }
 
+export type ConditionsStatus = 'LIVE' | 'FALLBACK' | 'UNAVAILABLE'
+
+export interface WeatherConditions {
+  status: ConditionsStatus
+  temperature?: number
+  condition?: string
+  rainProbability?: number
+  windKph?: number
+  visibilityKm?: number
+  lastUpdated?: string
+  provider?: string
+  message?: string
+}
+
+export interface TrafficConditions {
+  status: 'LIVE' | 'UNAVAILABLE'
+  estimatedTravelMinutes?: number
+  normalTravelMinutes?: number
+  condition?: string
+  delayMinutes?: number
+  distanceKm?: number
+  lastUpdated?: string
+  provider?: string
+  message?: string
+}
+
+export interface TravelConditions {
+  destination: Pick<HeritageLocation, 'id' | 'name' | 'latitude' | 'longitude' | 'district' | 'state' | 'coordinateNote'>
+  weather: WeatherConditions
+  traffic: TrafficConditions
+  recommendation: string
+  retrievedAt: string
+}
+
 export interface WeatherFoodRecommendation {
   weather: WeatherObservation
   message: string
@@ -260,6 +294,7 @@ export interface TrailStop extends HeritageLocation {
   matchReason: string
   distanceFromPreviousKm?: number
   culturalContext?: string
+  travelConditions?: Pick<TravelConditions, 'weather' | 'traffic'>
 }
 
 export interface SearchResults {
@@ -308,7 +343,7 @@ export interface HeritageRecognitionResult {
   nearby: HeritageLocation[]
 }
 
-export type AskIntent = 'WHY_IMPORTANT' | 'STORY' | 'NEARBY' | 'LANGUAGE' | 'TRAIL' | 'LIVING_HERITAGE' | 'ARTISAN' | 'FOOD' | 'WEATHER_FOOD' | 'GENERAL_HERITAGE'
+export type AskIntent = 'WHY_IMPORTANT' | 'STORY' | 'NEARBY' | 'LANGUAGE' | 'TRAIL' | 'LIVING_HERITAGE' | 'ARTISAN' | 'FOOD' | 'WEATHER_FOOD' | 'TRAVEL_CONDITIONS' | 'GENERAL_HERITAGE'
 
 export interface AskJeevantRequest {
   question: string
@@ -319,6 +354,7 @@ export interface AskJeevantRequest {
   durationMinutes?: number
   location?: string
   weather?: WeatherObservation
+  travelConditions?: Pick<TravelConditions, 'weather' | 'traffic' | 'recommendation'>
 }
 
 export interface AskJeevantResponse {
@@ -332,6 +368,7 @@ export interface AskJeevantResponse {
   relatedArtisanIds: string[]
   foodRecordIds?: string[]
   weatherContext?: WeatherObservation
+  travelConditions?: Pick<TravelConditions, 'weather' | 'traffic' | 'recommendation'>
   suggestedTiming?: string
   trailRequest?: TrailRequest
 }

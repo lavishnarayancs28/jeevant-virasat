@@ -86,6 +86,7 @@ GET  /api/regions
 GET  /api/regions/:slug
 GET  /api/heritage?search=&region=&category=&duration=&sort=
 GET  /api/heritage/:slug
+GET  /api/heritage/:id/conditions
 GET  /api/artisans?search=&region=
 GET  /api/artisans/:slug
 GET  /api/stories?search=&region=
@@ -147,4 +148,4 @@ Authentication uses bcrypt password hashes and an HttpOnly `jv_session` cookie; 
 
 In addition to the original discovery routes, the server supports `/api/auth/*`, heritage/story/artisan/product CRUD for authorized roles, provenance, verification requests/reviews, `/api/food`, `/api/weather`, `/api/food/recommendations`, favorites, protected inventory and livelihood records, business-health derivation, community submissions/moderation, audit hooks, and explicit `503` responses for unconfigured commerce. See [docs/openapi.yaml](docs/openapi.yaml) for request/response details and structured errors.
 
-Render should provide `DATABASE_URL`, `SESSION_SECRET`, `APP_URL`, and `FRONTEND_URL` before enabling strict production configuration. The service still binds to Render's `PORT` on `0.0.0.0`; no deployment is performed by this change.
+Render should provide `DATABASE_URL`, `SESSION_SECRET`, `APP_URL`, and `FRONTEND_URL` before enabling strict production configuration. Live weather requires `WEATHER_API_KEY` with `WEATHER_PROVIDER=openweathermap`; live traffic requires a supported provider and `TRAFFIC_API_KEY`, and remains unavailable until that adapter is implemented. The service still binds to Render's `PORT` on `0.0.0.0`; no deployment is performed by this change.

@@ -63,6 +63,12 @@ describe('backend foundation', () => {
     expect(weather.status).toBe(200)
     expect((await weather.json()).data.available).toBe(false)
     expect(calculateBusinessHealth([{ id: 's', artisanId: 'a', unitsSold: 2, sellingPrice: 100, saleDate: '2026-01-01' }], [{ id: 'e', artisanId: 'a', category: 'material', amount: 250, date: '2026-01-01' }]).health).toBe('NEGATIVE_MARGIN')
+    const conditions = await request('/api/heritage/brahma-sarovar/conditions')
+    expect(conditions.status).toBe(200)
+    const conditionData = (await conditions.json()).data
+    expect(conditionData.weather.status).toBe('UNAVAILABLE')
+    expect(conditionData.traffic.status).toBe('UNAVAILABLE')
+    expect(conditionData.traffic.estimatedTravelMinutes).toBeUndefined()
   })
 
   it('stores and deletes an authenticated user trail only through its owner route', async () => {
