@@ -11,7 +11,7 @@ export function conditionFromQuestion(question: string): WeatherObservation['con
 
 function localizedWeatherLabel(condition: WeatherObservation['condition'], language: Language) {
   const labels = { hot: { en: 'hot weather', hi: 'गर्म मौसम' }, warm: { en: 'warm weather', hi: 'गरम मौसम' }, cold: { en: 'cold weather', hi: 'ठंडा मौसम' }, rain: { en: 'rain', hi: 'बारिश' }, mild: { en: 'mild weather', hi: 'सौम्य मौसम' }, unknown: { en: 'the current weather', hi: 'वर्तमान मौसम' } }
-  return labels[condition ?? 'unknown'][language]
+  return labels[condition ?? 'unknown'][language === 'hi' ? 'hi' : 'en']
 }
 
 export function recommendWeatherFood(weather: WeatherObservation | undefined, foodRecords: HeritageLocation[], language: Language): WeatherFoodRecommendation {

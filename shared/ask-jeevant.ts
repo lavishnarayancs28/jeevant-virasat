@@ -75,7 +75,7 @@ function fallbackResponse(language: Language): AskJeevantResponse {
     "I don't have enough verified information about that yet. Try asking about this place, nearby heritage, its story or a cultural trail.",
     'मेरे पास अभी उसके बारे में पर्याप्त सत्यापित जानकारी नहीं है। इस स्थान, आसपास की विरासत, इसकी कहानी या सांस्कृतिक मार्ग के बारे में पूछें.',
   )
-  return { intent: 'GENERAL_HERITAGE', language, answer: answers[language], answers, confidence: 'fallback', relatedHeritageIds: [], relatedStoryIds: [], relatedArtisanIds: [] }
+  return { intent: 'GENERAL_HERITAGE', language, answer: answers[language] ?? answers.en, answers, confidence: 'fallback', relatedHeritageIds: [], relatedStoryIds: [], relatedArtisanIds: [] }
 }
 
 export function answerAskJeevant(input: AskJeevantRequest, heritage: HeritageLocation[], stories: Story[], artisans: Artisan[]): AskJeevantResponse {
@@ -162,7 +162,7 @@ export function answerAskJeevant(input: AskJeevantRequest, heritage: HeritageLoc
   return {
     intent,
     language,
-    answer: answers[language],
+    answer: answers[language] ?? answers.en,
     answers,
     confidence: 'grounded',
     relatedHeritageIds,

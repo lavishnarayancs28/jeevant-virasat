@@ -1,5 +1,8 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import type { Language, LocalizedText } from '../../shared/types'
+import { languageOptions, supplementalTranslations } from './language-dictionaries'
+
+export { languageOptions } from './language-dictionaries'
 
 const LANGUAGE_STORAGE_KEY = 'jeevant-virasat-language'
 
@@ -11,6 +14,7 @@ const translationTable = {
   'nav.hidden': { en: 'Hidden Heritage', hi: 'छिपी विरासत' },
   'nav.map': { en: 'Heritage map', hi: 'विरासत मानचित्र' },
   'nav.artisans': { en: 'Artisans', hi: 'कारीगर' },
+  'nav.vendors': { en: 'Local vendors', hi: 'स्थानीय विक्रेता' },
   'nav.trails': { en: 'Trails', hi: 'यात्रा मार्ग' },
   'nav.stories': { en: 'Stories', hi: 'कहानियाँ' },
   'nav.saved': { en: 'Saved places', hi: 'सहेजे स्थान' },
@@ -367,9 +371,60 @@ const translationTable = {
   'ask.fallbackBody': { en: 'Try asking about this place, nearby heritage, its story or a cultural trail.', hi: 'इस स्थान, आसपास की विरासत, इसकी कहानी या सांस्कृतिक मार्ग के बारे में पूछें।' },
   'ask.noContext': { en: 'Ask Jeevant needs a heritage place as context.', hi: 'जीवंत से पूछने के लिए किसी विरासत स्थल का संदर्भ चाहिए।' },
   'common.apiFallback': { en: 'API unavailable — showing the same local demonstration content so the prototype remains explorable.', hi: 'एपीआई उपलब्ध नहीं है — प्रोटोटाइप को उपयोगी रखने के लिए वही स्थानीय प्रदर्शन सामग्री दिखाई जा रही है।' },
+  'ask.languageFallback': { en: 'Ask Jeevant answers in English or Hindi when a reviewed translation is unavailable.', hi: 'समीक्षित अनुवाद उपलब्ध न होने पर जीवंत अंग्रेज़ी या हिंदी में उत्तर देता है।' },
   'common.loading': { en: 'Gathering the next story…', hi: 'अगली कहानी जुटाई जा रही है…' },
   'common.prototypeNotice': { en: 'Prototype content should be validated with cultural researchers, local institutions and community practitioners before public deployment.', hi: 'सार्वजनिक उपयोग से पहले प्रोटोटाइप सामग्री को सांस्कृतिक शोधकर्ताओं, स्थानीय संस्थानों और समुदाय-साधकों से सत्यापित किया जाना चाहिए।' },
   'common.noBooking': { en: 'No booking, payment or WhatsApp message has been sent.', hi: 'कोई बुकिंग, भुगतान या WhatsApp संदेश नहीं भेजा गया है।' },
+  'route.demo': { en: 'Demonstration region', hi: 'प्रदर्शन क्षेत्र' },
+  'route.viewMap': { en: 'View on map ↗', hi: 'मानचित्र पर देखें ↗' },
+  'footer.description': { en: 'Living heritage, local voices and the routes between them.', hi: 'जीवित विरासत, स्थानीय आवाज़ें और उनके बीच के रास्ते।' },
+  'footer.explore': { en: 'Explore', hi: 'देखें' },
+  'footer.plan': { en: 'Make a plan', hi: 'योजना बनाएँ' },
+  'footer.impact': { en: 'Cultural Impact', hi: 'सांस्कृतिक प्रभाव' },
+  'footer.about': { en: 'About the project', hi: 'परियोजना के बारे में' },
+  'footer.note': { en: 'Built for curious, responsible travel.', hi: 'जिज्ञासु, जिम्मेदार यात्रा के लिए।' },
+  'vendor.eyebrow': { en: 'Local vendor · prototype', hi: 'स्थानीय विक्रेता · प्रोटोटाइप' },
+  'vendor.title': { en: 'Local Vendor Dashboard', hi: 'स्थानीय विक्रेता डैशबोर्ड' },
+  'vendor.body': { en: 'A compact business view for a local vendor connected to Haryana’s living heritage.', hi: 'हरियाणा की जीवित विरासत से जुड़े एक छोटे व्यवसाय रिकॉर्ड को एक जगह देखें।' },
+  'vendor.overview': { en: 'Vendor overview', hi: 'विक्रेता अवलोकन' },
+  'vendor.business': { en: 'Today’s business', hi: 'आज का व्यवसाय' },
+  'vendor.products': { en: 'Products and stock', hi: 'उत्पाद और स्टॉक' },
+  'vendor.productsBody': { en: 'Simple stock signals for this prototype record.', hi: 'प्रोटोटाइप रिकॉर्ड के लिए सरल स्टॉक संकेत।' },
+  'vendor.insights': { en: 'Business insights', hi: 'व्यवसाय अंतर्दृष्टि' },
+  'vendor.insightsBody': { en: 'A lightweight view of the last seven days.', hi: 'पिछले सात दिनों का एक सरल दृश्य।' },
+  'vendor.cultural': { en: 'Cultural connection', hi: 'सांस्कृतिक जुड़ाव' },
+  'vendor.actions': { en: 'Quick actions', hi: 'त्वरित कार्रवाई' },
+  'vendor.sales': { en: 'Today’s sales', hi: 'आज की बिक्री' },
+  'vendor.orders': { en: 'Orders', hi: 'ऑर्डर' },
+  'vendor.customers': { en: 'Customers', hi: 'ग्राहक' },
+  'vendor.profit': { en: 'Estimated profit', hi: 'अनुमानित लाभ' },
+  'vendor.revenue': { en: 'Revenue', hi: 'राजस्व' },
+  'vendor.costs': { en: 'Costs', hi: 'लागत' },
+  'vendor.product': { en: 'Product', hi: 'उत्पाद' },
+  'vendor.price': { en: 'Price', hi: 'कीमत' },
+  'vendor.stock': { en: 'Stock', hi: 'स्टॉक' },
+  'vendor.status': { en: 'Status', hi: 'स्थिति' },
+  'vendor.inStock': { en: 'In stock', hi: 'स्टॉक में' },
+  'vendor.lowStock': { en: 'Low stock', hi: 'कम स्टॉक' },
+  'vendor.outOfStock': { en: 'Out of stock', hi: 'स्टॉक समाप्त' },
+  'vendor.sevenDay': { en: '7-day revenue', hi: '7-दिन का राजस्व' },
+  'vendor.heritageSite': { en: 'Related heritage site', hi: 'संबंधित विरासत स्थल' },
+  'vendor.practice': { en: 'Related craft / tradition', hi: 'शिल्प / परंपरा' },
+  'vendor.addProduct': { en: 'Add Product', hi: 'उत्पाद जोड़ें' },
+  'vendor.updateStock': { en: 'Update Stock', hi: 'स्टॉक अपडेट करें' },
+  'vendor.viewVerification': { en: 'View Verification', hi: 'सत्यापन देखें' },
+  'vendor.viewAnalytics': { en: 'View Business Analytics', hi: 'व्यवसाय विश्लेषण देखें' },
+  'vendor.prototypeAction': { en: '{action} is a prototype action. A production workflow would connect this control to reviewed vendor records.', hi: '{action} एक प्रोटोटाइप कार्रवाई है। उत्पादन कार्यप्रवाह इस नियंत्रण को समीक्षित विक्रेता रिकॉर्ड से जोड़ेगा।' },
+  'vendor.prototypeLimitation': { en: 'This dashboard uses clearly labelled prototype data only. It does not claim real orders, payments, or vendor verification.', hi: 'यह डैशबोर्ड केवल स्पष्ट रूप से लेबल किए गए प्रोटोटाइप डेटा का उपयोग करता है। यह वास्तविक ऑर्डर, भुगतान या विक्रेता सत्यापन का दावा नहीं करता।' },
+  'vendor.verificationStatus': { en: 'Verification status', hi: 'सत्यापन स्थिति' },
+  'vendor.overviewTitle': { en: 'A compact view of today’s work.', hi: 'आज के काम का एक नज़र में दृश्य।' },
+  'vendor.productsTitle': { en: 'Keep availability easy to read.', hi: 'जो उपलब्ध है, उसे स्पष्ट रखें।' },
+  'vendor.insightsTitle': { en: 'Small signals, useful context.', hi: 'छोटे संकेत, उपयोगी संदर्भ।' },
+  'vendor.financialSummary': { en: 'Financial summary', hi: 'वित्तीय सारांश' },
+  'vendor.financialNote': { en: 'Costs and profit are prototype estimates too.', hi: 'लागत और लाभ भी प्रोटोटाइप अनुमान हैं।' },
+  'vendor.actionsTitle': { en: 'Choose the next step.', hi: 'अगला कदम चुनें।' },
+  'vendor.prototypeLabel': { en: 'PROTOTYPE DATASET', hi: 'प्रोटोटाइप डेटा सेट' },
+  'vendor.prototypeLimitationLabel': { en: 'Prototype limitation: ', hi: 'प्रोटोटाइप सीमा: ' },
   'category.Architecture': { en: 'Architecture', hi: 'वास्तुकला' },
   'category.Architectural Heritage': { en: 'Architectural Heritage', hi: 'स्थापत्य विरासत' },
   'category.Craft': { en: 'Craft', hi: 'शिल्प' },
@@ -413,7 +468,8 @@ export type Translate = (key: string, fallback?: string, values?: Record<string,
 
 function readStoredLanguage(): Language {
   if (typeof window === 'undefined') return 'en'
-  return window.localStorage.getItem(LANGUAGE_STORAGE_KEY) === 'hi' ? 'hi' : 'en'
+  const stored = window.localStorage.getItem(LANGUAGE_STORAGE_KEY)
+  return languageOptions.some((option) => option.value === stored) ? stored as Language : 'en'
 }
 
 function interpolate(value: string, values: Record<string, string | number> = {}) {
@@ -421,7 +477,8 @@ function interpolate(value: string, values: Record<string, string | number> = {}
 }
 
 export function translate(key: string, language: Language, fallback = key, values?: Record<string, string | number>) {
-  const value = translationTable[key as TranslationKey]?.[language] ?? translationTable[key as TranslationKey]?.en ?? fallback
+  const entry = translationTable[key as TranslationKey] as Partial<Record<Language, string>> | undefined
+  const value = supplementalTranslations[language]?.[key] ?? entry?.[language] ?? entry?.en ?? fallback
   return interpolate(value, values)
 }
 
@@ -431,8 +488,11 @@ export function localize(value: string | LocalizedText | undefined, language: La
 }
 
 export function translateText(value: string, language: Language) {
-  const match = Object.values(translationTable).find((entry) => entry.en === value)
-  return match ? match[language] : value
+  const match = Object.entries(translationTable).find(([, entry]) => entry.en === value)
+  if (!match) return value
+  const [key, entry] = match
+  const typedEntry = entry as Partial<Record<Language, string>>
+  return supplementalTranslations[language]?.[key] ?? typedEntry[language] ?? typedEntry.en ?? value
 }
 
 export function categoryTranslationKey(category: string) { return `category.${category}` }
@@ -451,7 +511,11 @@ const LanguageContext = createContext<LanguageContextValue | null>(null)
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [language, setLanguage] = useState<Language>(readStoredLanguage)
-  useEffect(() => { window.localStorage.setItem(LANGUAGE_STORAGE_KEY, language) }, [language])
+  useEffect(() => {
+    window.localStorage.setItem(LANGUAGE_STORAGE_KEY, language)
+    document.documentElement.lang = language
+    document.documentElement.dir = language === 'ur' ? 'rtl' : 'ltr'
+  }, [language])
   const value = useMemo<LanguageContextValue>(() => ({ language, setLanguage, t: (key, fallback, values) => translate(key, language, fallback, values) }), [language])
   return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>
 }

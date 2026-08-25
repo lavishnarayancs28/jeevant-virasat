@@ -28,13 +28,10 @@ export type ExperienceType =
 
 export type TrailTime = '2 hours' | 'Half day' | 'Full day' | 'Weekend'
 export type CrowdPreference = 'Popular' | 'Balanced' | 'Hidden Gems'
-export type Language = 'en' | 'hi'
+export type Language = 'en' | 'hi' | 'bn' | 'te' | 'mr' | 'ta' | 'gu' | 'kn' | 'ml' | 'pa' | 'or' | 'as' | 'ur'
 export type VerificationStatus = 'VERIFIED' | 'COMMUNITY_VERIFIED' | 'PROTOTYPE' | 'PENDING_VERIFICATION'
 
-export interface LocalizedText {
-  en: string
-  hi: string
-}
+export type LocalizedText = { en: string } & Partial<Record<Exclude<Language, 'en'>, string>>
 
 export interface HeritageTranslations {
   name: LocalizedText

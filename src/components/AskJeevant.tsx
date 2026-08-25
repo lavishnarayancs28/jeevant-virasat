@@ -52,7 +52,7 @@ export function AskJeevant({ item }: { item: HeritageLocation }) {
       setResponse(next)
     } catch {
       setResponse(answerAskJeevant({ question: trimmed, heritageId: item.id, language }, heritage, stories, artisans))
-      setError(language === 'hi' ? 'एपीआई उपलब्ध नहीं है, इसलिए स्थानीय ग्राउंडेड उत्तर दिखाया जा रहा है।' : 'The API is unavailable, so a local grounded response is being shown.')
+      setError(t('common.apiFallback'))
     } finally {
       setBusy(false)
     }
@@ -67,6 +67,7 @@ export function AskJeevant({ item }: { item: HeritageLocation }) {
         <h2 id="ask-jeevant-title">{t('ask.button')}</h2>
         <p className="ask-subtitle">{t('ask.subtitle')}</p>
         <div className="ask-context"><span>{t('ask.exploring')}</span><strong>{heritageCopy(item, 'name', language)}, {item.regionName}</strong></div>
+        {language !== 'en' && language !== 'hi' && <StatusNotice>{t('ask.languageFallback')}</StatusNotice>}
         {!response && <div className="ask-suggestions"><span>{t('ask.suggested')}</span>{suggestedQuestions.map((suggestion) => <button type="button" key={suggestion.value} onClick={() => ask(suggestion.value)}>{language === 'hi' ? suggestion.hi : suggestion.en}<ArrowRight size={14} /></button>)}</div>}
         <form className="ask-form" onSubmit={(event) => { event.preventDefault(); void ask() }}><input value={question} onChange={(event) => setQuestion(event.target.value)} placeholder={t('ask.placeholder')} aria-label={t('ask.placeholder')} /><button type="submit" className="button primary" disabled={busy} aria-label={t('ask.send')}>{busy ? <span className="loading-dot" /> : <Send size={16} />}<span>{t('ask.send')}</span></button></form>
         <div className="ask-response" aria-live="polite">
