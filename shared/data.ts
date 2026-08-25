@@ -1,4 +1,6 @@
-import type { Artisan, HeritageLocation, RecognitionExample, Region, Story, Trail } from './types'
+import type { Artisan, HeritageLocation, LivelihoodRecord, Product, RecognitionExample, Region, Story, Trail } from './types'
+import { heritageTranslations, storyTranslations } from './localized-data'
+import { calculateLivelihood } from './livelihood'
 
 const prototypeImage = (name: string) => `/images/${name}.svg`
 const officialImageLicense = 'Government site image; reuse permission is not stated — verify before production.'
@@ -69,7 +71,7 @@ const haryana = regions[4]
 const panipat = regions[5]
 const gurugram = regions[6]
 
-export const heritage: HeritageLocation[] = [
+const heritageRecords: HeritageLocation[] = [
   {
     id: 'heritage-brahma-sarovar', regionId: kurukshetra.id, regionName: kurukshetra.name, name: 'Brahma Sarovar', slug: 'brahma-sarovar', category: 'Sacred Tradition', district: 'Kurukshetra', state: 'Haryana',
     shortDescription: 'A major sacred water landscape where ritual, walking and public life meet.', description: 'Brahma Sarovar is presented here as a living water edge rather than a backdrop: a place of pilgrimage, movement and repeated community use in Kurukshetra.', culturalSignificance: 'The sarovar’s meaning is carried through worship, bathing, seasonal gatherings and the people who return to its ghats.', historicalContext: 'Haryana Tourism and the District Kurukshetra administration list Brahma Sarovar among the district’s key heritage attractions. This prototype avoids adding unsupported origin claims.', livingToday: 'Observe worship and bathing practices from a respectful distance, follow local photography guidance and keep the water edge clear.',
@@ -142,6 +144,26 @@ export const heritage: HeritageLocation[] = [
   },
 ]
 
+function provenanceFor(item: HeritageLocation) {
+  const verificationStatus = item.verifiedStatus === 'Official source' ? 'VERIFIED' : item.verifiedStatus === 'Community source' ? 'COMMUNITY_VERIFIED' : item.verifiedStatus === 'Research needed' ? 'PENDING_VERIFICATION' : 'PROTOTYPE'
+  return { source: item.imageSource, sourceUrl: item.sourceUrl, verificationStatus, lastUpdated: '2026-08-25', isPrototype: verificationStatus !== 'VERIFIED', imageSource: item.imageSource, imageLicense: item.imageLicense } as const
+}
+
+export const heritage: HeritageLocation[] = heritageRecords.map((item): HeritageLocation => ({
+  ...item,
+  translations: heritageTranslations[item.id],
+  provenance: provenanceFor(item),
+  ...(item.id === 'heritage-kurukshetra-seasonal-food' ? {
+    foodProfile: {
+      dishName: 'Kurukshetra Seasonal Food Practice',
+      culturalStory: 'A research prompt for documenting seasonal ingredients, household practice, labour and hospitality with local cooks and researchers.',
+      weatherSuitability: ['hot', 'warm', 'cold', 'rain', 'all'],
+      typicalContext: 'Prototype food-research record; no named dish, kitchen, menu or booking is asserted.',
+      isPrototype: true,
+      provenance: { ...provenanceFor(item), verificationStatus: 'PENDING_VERIFICATION' as const, isPrototype: true },
+    },
+  } : {}),
+}))
 export const hiddenHeritage = heritage.filter((item) => item.isHidden)
 
 export const recognitionExamples: RecognitionExample[] = [
@@ -157,9 +179,11 @@ export const recognitionExamples: RecognitionExample[] = [
 
 const prototypeRecord = {
   profileImageSource: 'Jeevant Virasat prototype placeholder', profileImageLicense: 'Original project SVG; no person depicted and no portrait rights implied.', prototypeStatus: 'Unverified prototype record' as const, profileSourceUrl: 'https://haryanatourism.gov.in/', contactMethod: 'Prototype only — no contact request is sent; verify a local introduction before publishing.',
+  district: 'Haryana', verificationStatus: 'PROTOTYPE' as const, verificationDate: '2026-08-25', verificationSource: 'Jeevant Virasat demonstration dataset', verifierType: 'Prototype record — no independent verifier', profileVersion: 'v1.0-prototype', source: 'Jeevant Virasat prototype dataset', sourceUrl: 'https://haryanatourism.gov.in/', lastUpdated: '2026-08-25', isPrototype: true,
+  provenance: { source: 'Jeevant Virasat prototype dataset', sourceUrl: 'https://haryanatourism.gov.in/', verificationStatus: 'PROTOTYPE' as const, lastUpdated: '2026-08-25', isPrototype: true, imageSource: 'Jeevant Virasat prototype placeholder', imageLicense: 'Original project SVG; no person depicted and no portrait rights implied.' },
 }
 
-export const artisans: Artisan[] = [
+const artisanRecords = [
   { ...prototypeRecord, id: 'artisan-pipli-applique', name: 'Pipli Appliqué Collective', slug: 'pipli-applique-collective', craft: 'Appliqué textile', regionId: kurukshetra.id, regionName: kurukshetra.name, location: 'Pipli, Kurukshetra district, Haryana', biography: 'Demonstration record for a Pipli appliqué practice. The individual makers, consent status and workshop details are intentionally not published until community review.', craftStory: 'A prototype prompt about cut cloth, colour and shared workshop knowledge—not an attributed personal biography.', profileImage: prototypeImage('prototype-artisan-textile'), gallery: [prototypeImage('prototype-artisan-textile')], specialties: ['Cut cloth', 'Layered colour', 'Workshop context'], relatedHeritageIds: ['heritage-pipli-craft'] },
   { ...prototypeRecord, id: 'artisan-thanesar-terracotta', name: 'Thanesar Terracotta Practice', slug: 'thanesar-terracotta-practice', craft: 'Terracotta pottery', regionId: kurukshetra.id, regionName: kurukshetra.name, location: 'Thanesar, Kurukshetra district, Haryana', biography: 'Demonstration record for a clay and vessel-making practice. No individual artisan is being represented as verified.', craftStory: 'A prototype prompt about clay preparation, wheel work and everyday vessels that requires a local maker interview.', profileImage: prototypeImage('prototype-artisan-pottery'), gallery: [prototypeImage('prototype-artisan-pottery')], specialties: ['Clay preparation', 'Household vessels', 'Process demonstration'], relatedHeritageIds: ['heritage-sheikh-chahelis-tomb'] },
   { ...prototypeRecord, id: 'artisan-hisar-embroidery', name: 'Hisar Needlework Circle', slug: 'hisar-needlework-circle', craft: 'Textile embroidery', regionId: hisar.id, regionName: hisar.name, location: 'Hisar district, Haryana', biography: 'Demonstration record for a Haryana textile practice. Names, photographs and credentials are withheld pending consent and community review.', craftStory: 'A prototype prompt about motif, cloth and memory that should be completed with the people who practise it.', profileImage: prototypeImage('prototype-artisan-embroidery'), gallery: [prototypeImage('prototype-artisan-embroidery')], specialties: ['Embroidery', 'Motif memory', 'Textile care'], relatedHeritageIds: ['heritage-rakhigarhi'] },
@@ -168,7 +192,34 @@ export const artisans: Artisan[] = [
   { ...prototypeRecord, id: 'artisan-surajkund-makers', name: 'Surajkund Maker Network (prototype)', slug: 'surajkund-maker-network', craft: 'Craft fair practice', regionId: faridabad.id, regionName: faridabad.name, location: 'Surajkund, Faridabad district, Haryana', biography: 'Demonstration record linked to the public craft-fair context described by Haryana Tourism. It does not identify or speak for any participating maker.', craftStory: 'A prototype prompt about attribution, market access and craft demonstrations at a public fair.', profileImage: prototypeImage('prototype-artisan-textile'), gallery: [prototypeImage('prototype-artisan-textile')], specialties: ['Handicrafts', 'Handlooms', 'Maker attribution'], relatedHeritageIds: ['heritage-surajkund-crafts-mela'] },
 ]
 
-export const stories: Story[] = [
+export const artisans: Artisan[] = artisanRecords.map((item) => {
+  const locationParts = item.location.split(',').map((part) => part.trim())
+  const district = locationParts.find((part) => /district/i.test(part))?.replace(/\s+district/i, '') ?? locationParts[locationParts.length - 2] ?? 'Haryana'
+  const provenance = { ...item.provenance, source: item.source, sourceUrl: item.sourceUrl, verificationStatus: item.verificationStatus, lastUpdated: item.lastUpdated, isPrototype: item.isPrototype }
+  return { ...item, district, provenance }
+})
+
+export const products: Product[] = [
+  {
+    id: 'product-pipli-applique-panel', name: 'Pipli appliqué textile panel', slug: 'pipli-applique-textile-panel', craft: 'Appliqué textile', originDistrict: 'Kurukshetra', regionName: 'Kurukshetra',
+    description: 'A prototype product record for cut cloth, layered colour and hand-stitching in the Pipli craft prompt.', culturalStory: 'The platform keeps the product linked to the craft record while leaving maker attribution, current availability and price validation open.', productionProcess: ['Cut cloth shapes with local guidance.', 'Layer and stitch the design.', 'Document maker attribution and consent before publication.'], image: prototypeImage('prototype-artisan-textile'), material: 'Layered cloth and thread', productionTimeMinutes: 240, availability: 'Prototype reference only — no order or booking is available.', referencePrice: { kind: 'PROTOTYPE_REFERENCE', label: 'Reference price — prototype: ₹400–₹1,200', min: 400, max: 1200, unit: 'per panel' }, estimatedCost: 620, verificationStatus: 'PROTOTYPE', isPrototype: true, source: 'Jeevant Virasat prototype dataset', sourceUrl: 'https://haryanatourism.gov.in/destinations/kurukshetra/', lastUpdated: '2026-08-25', provenance: { source: 'Jeevant Virasat prototype dataset', sourceUrl: 'https://haryanatourism.gov.in/destinations/kurukshetra/', verificationStatus: 'PROTOTYPE', lastUpdated: '2026-08-25', isPrototype: true, imageSource: 'Jeevant Virasat prototype placeholder', imageLicense: 'Original project SVG; no person depicted.' }, artisanId: 'artisan-pipli-applique', relatedHeritageIds: ['heritage-pipli-craft'],
+  },
+  {
+    id: 'product-thanesar-terracotta-vessel', name: 'Thanesar terracotta vessel', slug: 'thanesar-terracotta-vessel', craft: 'Terracotta pottery', originDistrict: 'Kurukshetra', regionName: 'Kurukshetra',
+    description: 'A prototype product record for a household vessel-making practice; no individual maker is represented as verified.', culturalStory: 'This product is a documentation prompt for clay preparation, wheel work and everyday use, not a marketplace listing.', productionProcess: ['Prepare and shape clay with a consented maker.', 'Dry and fire the vessel according to local practice.', 'Record the process and maker attribution before public publication.'], image: prototypeImage('prototype-artisan-pottery'), material: 'Clay', productionTimeMinutes: 180, availability: 'Prototype reference only — local availability is unknown.', referencePrice: { kind: 'PROTOTYPE_REFERENCE', label: 'Reference price — prototype: ₹250–₹800', min: 250, max: 800, unit: 'per vessel' }, estimatedCost: 310, verificationStatus: 'PROTOTYPE', isPrototype: true, source: 'Jeevant Virasat prototype dataset', sourceUrl: 'https://haryanatourism.gov.in/', lastUpdated: '2026-08-25', provenance: { source: 'Jeevant Virasat prototype dataset', sourceUrl: 'https://haryanatourism.gov.in/', verificationStatus: 'PROTOTYPE', lastUpdated: '2026-08-25', isPrototype: true, imageSource: 'Jeevant Virasat prototype placeholder', imageLicense: 'Original project SVG; no person depicted.' }, artisanId: 'artisan-thanesar-terracotta', relatedHeritageIds: [],
+  },
+]
+
+const livelihoodInputs = artisans.flatMap((artisan, artisanIndex) => [
+  { artisanId: artisan.id, period: '2026-05', productionUnits: 18 + artisanIndex * 2, unitsSold: 12 + artisanIndex, averageSellingPrice: 650 + artisanIndex * 40, materialCost: 2600 + artisanIndex * 150, labourCost: 3200 + artisanIndex * 180, transportCost: 700, otherCosts: 450, source: 'Illustrative prototype data', isPrototype: true },
+  { artisanId: artisan.id, period: '2026-06', productionUnits: 21 + artisanIndex * 2, unitsSold: 15 + artisanIndex, averageSellingPrice: 680 + artisanIndex * 40, materialCost: 2900 + artisanIndex * 150, labourCost: 3500 + artisanIndex * 180, transportCost: 760, otherCosts: 500, source: 'Illustrative prototype data', isPrototype: true },
+  { artisanId: artisan.id, period: '2026-07', productionUnits: 24 + artisanIndex * 2, unitsSold: 17 + artisanIndex, averageSellingPrice: 700 + artisanIndex * 40, materialCost: 3200 + artisanIndex * 150, labourCost: 3700 + artisanIndex * 180, transportCost: 800, otherCosts: 520, source: 'Illustrative prototype data', isPrototype: true },
+  { artisanId: artisan.id, period: '2026-08', productionUnits: 20 + artisanIndex * 2, unitsSold: 14 + artisanIndex, averageSellingPrice: 720 + artisanIndex * 40, materialCost: 3000 + artisanIndex * 150, labourCost: 3600 + artisanIndex * 180, transportCost: 780, otherCosts: 510, source: 'Illustrative prototype data', isPrototype: true },
+])
+
+export const livelihoodRecords: LivelihoodRecord[] = livelihoodInputs.map(calculateLivelihood)
+
+const storyRecords: Story[] = [
   { id: 'story-water-memory', title: 'What a Kurukshetra Waterbody Holds', slug: 'what-a-kurukshetra-waterbody-holds', regionId: kurukshetra.id, regionName: kurukshetra.name, category: 'Landscape & memory', excerpt: 'Brahma Sarovar and Sannihit Sarovar show how a water body can be sacred, civic and deeply local at the same time.', image: images.brahma, content: ['The water edge is not only a view. At Kurukshetra’s sarovars, visitors encounter worship, walking, local guidance and the practical work of keeping a public place usable.', 'The official district and tourism references name Brahma Sarovar and Sannihit Sarovar among the area’s important heritage places. A responsible platform should preserve that context while leaving room for local interpretation.', 'The prototype therefore treats the image as an invitation to look closer—not as proof of a universal visitor experience.'], relatedHeritageIds: ['heritage-brahma-sarovar', 'heritage-sannihit-sarovar'], relatedArtisanIds: ['artisan-kurukshetra-moonj'] },
   { id: 'story-jyotisar', title: 'At Jyotisar, Context Comes First', slug: 'at-jyotisar-context-comes-first', regionId: kurukshetra.id, regionName: kurukshetra.name, category: 'Sacred landscape', excerpt: 'A sacred site asks the visitor to notice water, trees, ritual and interpretation before reaching for a camera.', image: images.jyotisar, content: ['Jyotisar is named by Haryana Tourism and the District Kurukshetra administration as a pilgrimage place on the bank of Jyotisar Sarovar.', 'Its meaning is carried through the traditions and practices that bring people there. The platform can point to those layers, but it should not replace the site’s own voices with a single polished caption.', 'Begin with attention: read the local guidance, ask before photographing and let the visit remain more than an identification result.'], relatedHeritageIds: ['heritage-jyotisar'], relatedArtisanIds: [] },
   { id: 'story-thanesar-architecture', title: 'Thanesar Is More Than One Monument', slug: 'thanesar-is-more-than-one-monument', regionId: kurukshetra.id, regionName: kurukshetra.name, category: 'Built heritage', excerpt: 'Sheikh Chaheli’s Tomb and Sthaneshwara Mahadev Temple make the city’s architectural and religious layers visible together.', image: images.sheikh, content: ['Thanesar’s heritage is encountered as a network: tombs, temples, tanks, gardens and streets that remain part of a working city.', 'The official references for Sheikh Chaheli’s Tomb and Sthaneshwara Mahadev Temple describe distinct places with different histories and living practices. Keeping those records separate is part of respectful discovery.', 'The prototype links them only as nearby context, never as interchangeable images or stories.'], relatedHeritageIds: ['heritage-sheikh-chahelis-tomb', 'heritage-sthaneshwar-mahadev'], relatedArtisanIds: [] },
@@ -179,10 +230,12 @@ export const stories: Story[] = [
   { id: 'story-farrukhnagar-mirrors-and-water', title: 'Farrukhnagar’s Mirrors and Water', slug: 'farrukhnagars-mirrors-and-water', regionId: gurugram.id, regionName: gurugram.name, category: 'Built heritage', excerpt: 'Shish Mahal makes mirrors, sandstone and water design visible in Farrukhnagar’s protected architectural landscape.', image: images.shishMahal, content: ['Haryana Tourism describes Shish Mahal as a palace built in 1733 with a sandstone Diwan-e-Aam, mirrors and a water channel with a fountain pool.', 'The details are architectural evidence, not an invitation to fill the gaps with an invented royal biography. A careful visit starts with the structure and the town around it.', 'The image is credited to Wikimedia Commons and the record keeps access and current site conditions open for local verification.'], relatedHeritageIds: ['heritage-shish-mahal'], relatedArtisanIds: [] },
 ]
 
+export const stories = storyRecords.map((item) => ({ ...item, translations: storyTranslations[item.id] }))
+
 export const sampleTrails: Trail[] = [
   { id: 'trail-water-and-sacred-memory', name: 'Water & Sacred Memory in Kurukshetra', regionId: kurukshetra.id, regionName: kurukshetra.name, duration: 285, interests: ['Local Stories', 'History'], experienceType: 'Deep Historical', timeChoice: 'Half day', createdAt: '2026-01-01T00:00:00.000Z', stops: [heritage[0], heritage[5], heritage[3]].map((stop, index) => ({ ...stop, matchReason: ['Begin with the scale of a shared sacred water edge.', 'Follow the district’s connected sarovar tradition.', 'End at a pilgrimage landscape where interpretation and practice meet.'][index], distanceFromPreviousKm: index === 0 ? undefined : 4.5 })) },
   { id: 'trail-thanesar-layers', name: 'Thanesar’s Built Heritage Layers', regionId: kurukshetra.id, regionName: kurukshetra.name, duration: 285, interests: ['Architecture', 'History'], experienceType: 'Deep Historical', timeChoice: 'Half day', createdAt: '2026-01-01T00:00:00.000Z', stops: [heritage[4], heritage[8], heritage[7]].map((stop, index) => ({ ...stop, matchReason: ['Start with a protected tomb complex and its gardens.', 'Read a temple precinct through daily use and architecture.', 'Close with a quieter built-heritage stop in the city circuit.'][index], distanceFromPreviousKm: index === 0 ? undefined : 2.8 })) },
   { id: 'trail-haryana-sites-beyond-kurukshetra', name: 'Haryana Sites Beyond the Headline', regionId: haryana.id, regionName: haryana.name, duration: 450, interests: ['History', 'Photography'], experienceType: 'Quiet & Authentic', timeChoice: 'Full day', createdAt: '2026-01-01T00:00:00.000Z', stops: [heritage[9], heritage[10]].map((stop, index) => ({ ...stop, matchReason: ['Read Haryana through an archaeological landscape.', 'Follow craft, handloom and performance into a public fair setting.'][index], distanceFromPreviousKm: index === 0 ? undefined : 185 })) },
 ]
 
-export const demoData = { regions, heritage, artisans, stories, sampleTrails }
+export const demoData = { regions, heritage, artisans, stories, products, livelihoodRecords, sampleTrails }

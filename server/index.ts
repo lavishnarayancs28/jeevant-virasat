@@ -2,10 +2,12 @@ import express from 'express'
 import { createServer } from 'node:http'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { artisans, heritage, hiddenHeritage, regions, sampleTrails, stories } from '../shared/data'
+import { artisans, heritage, hiddenHeritage, livelihoodRecords, products, regions, sampleTrails, stories } from '../shared/data'
 import type { Artisan, HeritageLocation, Region, Story } from '../shared/types'
 import { generateTrail, validateTrailRequest } from './recommendation'
 import { identifyHeritage } from '../shared/recognition'
+import { answerAskJeevant } from '../shared/ask-jeevant'
+import { recommendWeatherFood } from '../shared/weather-food'
 
 const app = express()
 const port = Number(process.env.PORT ?? 8787)
@@ -86,6 +88,28 @@ app.get('/api/artisans/:slug', (req, res) => {
   const item = bySlug(artisans, req.params.slug)
   return item ? res.json(ok(item)) : res.status(404).json(fail('Artisan not found.', 404))
 })
+app.get('/api/verify/artisan/:id', (req, res) => {
+  const item = artisans.find((artisan) => artisan.id === req.params.id)
+  return item ? res.json(ok(item)) : res.status(404).json(fail('Verification record not found.', 404))
+})
+app.get('/api/verify/heritage/:id', (req, res) => {
+  const item = heritage.find((place) => place.id === req.params.id)
+  return item ? res.json(ok(item)) : res.status(404).json(fail('Verification record not found.', 404))
+})
+app.get('/api/verify/product/:id', (req, res) => {
+  const item = products.find((product) => product.id === req.params.id)
+  return item ? res.json(ok(item)) : res.status(404).json(fail('Verification record not found.', 404))
+})
+
+app.get('/api/products', (req, res) => {
+  const artisanId = queryText(req.query.artisanId)
+  const result = products.filter((product) => !artisanId || product.artisanId === artisanId)
+  return res.json(ok(result))
+})
+app.get('/api/products/:slug', (req, res) => {
+  const item = products.find((product) => product.slug === req.params.slug)
+  return item ? res.json(ok(item)) : res.status(404).json(fail('Product not found.', 404))
+})
 
 app.get('/api/stories', (req, res) => {
   const search = queryText(req.query.search)
@@ -116,13 +140,32 @@ app.get('/api/impact', (_req, res) => res.json(ok({
   regionsRepresented: new Set(heritage.map((item) => item.regionId)).size,
   livingTraditions: heritage.filter((item) => ['Folk Culture', 'Community Practice', 'Sacred Tradition', 'Sacred Heritage', 'Sacred Landscape', 'Living Heritage', 'Festival'].includes(item.category)).length,
   hiddenHeritageEntries: hiddenHeritage.length,
+  productsTracked: products.length,
+  productionRecords: livelihoodRecords.length,
+  revenueRecords: livelihoodRecords.length,
+  businessHealthExamples: artisans.length,
 })))
+
+app.get('/api/weather', (_req, res) => res.json(ok({ available: false, message: 'Weather-aware recommendations are unavailable right now.', weather: { source: 'unavailable' } })))
+app.post('/api/food/recommendations', (req, res) => {
+  const language = req.body?.language === 'hi' ? 'hi' : 'en'
+  const foodRecords = heritage.filter((item) => item.category === 'Food')
+  return res.json(ok(recommendWeatherFood(req.body?.weather, foodRecords, language)))
+})
 
 app.post('/api/heritage/identify', (req, res) => {
   try {
     return res.json(ok(identifyHeritage(req.body)))
   } catch {
     return res.status(400).json(fail('Could not process this prototype image.'))
+  }
+})
+
+app.post('/api/ask-jeevant', (req, res) => {
+  try {
+    return res.json(ok(answerAskJeevant(req.body, heritage, stories, artisans)))
+  } catch {
+    return res.status(400).json(fail('Ask Jeevant could not use this context.'))
   }
 })
 

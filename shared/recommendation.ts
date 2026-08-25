@@ -32,12 +32,15 @@ export function validateTrailRequest(input: unknown): TrailRequest {
   if (!candidate.experienceType || !validExperiences.includes(candidate.experienceType)) throw new Error('Choose an experience preference.')
   if (typeof candidate.regionSlug !== 'string' || !candidate.regionSlug.trim()) throw new Error('Choose a region.')
   if (candidate.crowdPreference && !validCrowdPreferences.includes(candidate.crowdPreference)) throw new Error('Choose a valid crowd preference.')
+  if (candidate.durationMinutes !== undefined && (!Number.isFinite(candidate.durationMinutes) || candidate.durationMinutes < 60 || candidate.durationMinutes > 960)) throw new Error('Choose a valid duration.')
   return {
     interests: candidate.interests.filter((value): value is string => typeof value === 'string').slice(0, 8),
     timeChoice: candidate.timeChoice,
     experienceType: candidate.experienceType,
     regionSlug: candidate.regionSlug,
     crowdPreference: candidate.crowdPreference,
+    durationMinutes: candidate.durationMinutes,
+    startingHeritageId: typeof candidate.startingHeritageId === 'string' ? candidate.startingHeritageId : undefined,
   }
 }
 
@@ -53,12 +56,13 @@ function scoreLocation(location: HeritageLocation, request: TrailRequest) {
   const regionMatch = location.regionId === request.regionSlug || location.regionId.endsWith(request.regionSlug) || (request.regionSlug.endsWith('haryana') && location.state === 'Haryana') ? 1 : 0
   const hiddenMatch = location.isHidden ? 1 : 0
   const crowdMatch = request.crowdPreference === 'Hidden Gems' ? hiddenMatch : request.crowdPreference === 'Popular' ? (hiddenMatch ? 0 : 1) : 0
-  const score = categoryMatch * 5 + (categoryMatch ? 4 : 0) + tagMatch * 3 + durationFit * 3 + experienceMatch * 2 + regionMatch * 2 + crowdMatch * 4
+  const startingMatch = request.startingHeritageId === location.id ? 1 : 0
+  const score = categoryMatch * 5 + (categoryMatch ? 4 : 0) + tagMatch * 3 + durationFit * 3 + experienceMatch * 2 + regionMatch * 2 + crowdMatch * 4 + startingMatch * 8
   return { score, categoryMatch, tagMatch, experienceMatch, durationFit, regionMatch, hiddenMatch }
 }
 
 export function generateTrail(request: TrailRequest, locations: HeritageLocation[], regionName: string): Trail {
-  const budget = timeBudgets[request.timeChoice]
+  const budget = Math.min(timeBudgets[request.timeChoice], request.durationMinutes ?? timeBudgets[request.timeChoice])
   const ranked = locations
     .filter((location) => location.regionId === request.regionSlug || location.regionId.endsWith(request.regionSlug) || (request.regionSlug.endsWith('haryana') && location.state === 'Haryana'))
     .map((location) => ({ location, metrics: scoreLocation(location, request) }))
