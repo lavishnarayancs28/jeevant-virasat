@@ -1,0 +1,268 @@
+openapi: 3.0.3
+info:
+  title: Jeevant Virasat API
+  version: 0.1.0
+  description: >-
+    Backend foundation for Haryana living-heritage discovery. Prototype records,
+    prices, verification and livelihood examples remain explicitly labelled.
+servers:
+  - url: /api
+tags:
+  - name: Public content
+  - name: Authentication
+  - name: Private artisan data
+  - name: Community and moderation
+paths:
+  /health:
+    get:
+      tags: [Public content]
+      security: []
+      responses:
+        '200': { description: Service health }
+  /heritage:
+    get:
+      tags: [Public content]
+      security: []
+      parameters:
+        - { name: region, in: query, schema: { type: string } }
+        - { name: district, in: query, schema: { type: string } }
+        - { name: category, in: query, schema: { type: string } }
+        - { name: duration, in: query, schema: { type: string, enum: [short, medium, long] } }
+        - { name: search, in: query, schema: { type: string, maxLength: 120 } }
+        - { name: hidden, in: query, schema: { type: boolean } }
+      responses:
+        '200': { description: Heritage records, content: { application/json: { schema: { $ref: '#/components/schemas/DataArray' } } } }
+    post:
+      tags: [Public content]
+      security: [{ sessionCookie: [] }]
+      requestBody: { required: true, content: { application/json: { schema: { type: object } } } }
+      responses: { '201': { description: Created }, '401': { $ref: '#/components/responses/Unauthorized' }, '403': { $ref: '#/components/responses/Forbidden' } }
+  /heritage/{id}:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    get:
+      tags: [Public content]
+      security: []
+      responses: { '200': { description: Heritage record }, '404': { $ref: '#/components/responses/NotFound' } }
+    patch:
+      tags: [Public content]
+      security: [{ sessionCookie: [] }]
+      requestBody: { required: true, content: { application/json: { schema: { type: object } } } }
+      responses: { '200': { description: Updated }, '401': { $ref: '#/components/responses/Unauthorized' }, '403': { $ref: '#/components/responses/Forbidden' } }
+    delete:
+      tags: [Public content]
+      security: [{ sessionCookie: [] }]
+      responses: { '200': { description: Deleted }, '401': { $ref: '#/components/responses/Unauthorized' }, '403': { $ref: '#/components/responses/Forbidden' } }
+  /heritage/{id}/provenance:
+    get:
+      tags: [Public content]
+      security: []
+      parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+      responses: { '200': { description: Source and verification metadata }, '404': { $ref: '#/components/responses/NotFound' } }
+  /hidden-heritage:
+    get:
+      tags: [Public content]
+      security: []
+      responses: { '200': { description: Explicitly marked hidden-prototype records } }
+  /artisans:
+    get:
+      tags: [Public content]
+      security: []
+      responses: { '200': { description: Public artisan profiles } }
+    post:
+      tags: [Public content]
+      security: [{ sessionCookie: [] }]
+      responses: { '201': { description: Created }, '401': { $ref: '#/components/responses/Unauthorized' }, '403': { $ref: '#/components/responses/Forbidden' } }
+  /artisans/{id}:
+    get:
+      tags: [Public content]
+      security: []
+      parameters: [{ $ref: '#/components/parameters/id' }]
+      responses: { '200': { description: Public profile } }
+  /artisans/{id}/financials:
+    get:
+      tags: [Private artisan data]
+      security: [{ sessionCookie: [] }]
+      parameters: [{ $ref: '#/components/parameters/id' }]
+      responses: { '200': { description: Private derived financial view }, '401': { $ref: '#/components/responses/Unauthorized' }, '403': { $ref: '#/components/responses/Forbidden' } }
+  /artisans/{id}/livelihood:
+    get:
+      tags: [Private artisan data]
+      security: [{ sessionCookie: [] }]
+      parameters: [{ $ref: '#/components/parameters/id' }]
+      responses: { '200': { description: Private illustrative livelihood records }, '401': { $ref: '#/components/responses/Unauthorized' }, '403': { $ref: '#/components/responses/Forbidden' } }
+  /artisans/{id}/inventory:
+    get:
+      tags: [Private artisan data]
+      security: [{ sessionCookie: [] }]
+      parameters: [{ $ref: '#/components/parameters/id' }]
+      responses: { '200': { description: Private inventory }, '403': { $ref: '#/components/responses/Forbidden' } }
+    post:
+      tags: [Private artisan data]
+      security: [{ sessionCookie: [] }]
+      parameters: [{ $ref: '#/components/parameters/id' }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/InventoryInput' } } } }
+      responses: { '201': { description: Inventory upserted }, '400': { $ref: '#/components/responses/BadRequest' }, '403': { $ref: '#/components/responses/Forbidden' } }
+  /artisans/{id}/verification-request:
+    post:
+      tags: [Private artisan data]
+      security: [{ sessionCookie: [] }]
+      parameters: [{ $ref: '#/components/parameters/id' }]
+      responses: { '201': { description: Pending verification request }, '403': { $ref: '#/components/responses/Forbidden' } }
+  /artisans/{id}/verification:
+    get:
+      tags: [Public content]
+      security: []
+      parameters: [{ $ref: '#/components/parameters/id' }]
+      responses: { '200': { description: Verification history } }
+  /verifications/{id}/review:
+    post:
+      tags: [Community and moderation]
+      security: [{ sessionCookie: [] }]
+      parameters: [{ $ref: '#/components/parameters/id' }]
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [status], properties: { status: { type: string, enum: [VERIFIED, COMMUNITY_VERIFIED, REJECTED, PENDING] }, notes: { type: string } } } } } }
+      responses: { '200': { description: Reviewed }, '403': { $ref: '#/components/responses/Forbidden' } }
+  /products:
+    get:
+      tags: [Public content]
+      security: []
+      responses: { '200': { description: Public product records } }
+  /products/{id}:
+    get:
+      tags: [Public content]
+      security: []
+      parameters: [{ $ref: '#/components/parameters/id' }]
+      responses: { '200': { description: Product record } }
+  /products/{id}/prices:
+    get:
+      tags: [Public content]
+      security: []
+      parameters: [{ $ref: '#/components/parameters/id' }]
+      responses: { '200': { description: Historical/reference prices; prototype labels are retained } }
+  /stories:
+    get:
+      tags: [Public content]
+      security: []
+      responses: { '200': { description: Cultural stories with available translations/audio metadata } }
+  /food:
+    get:
+      tags: [Public content]
+      security: []
+      responses: { '200': { description: Culinary heritage records without medical claims } }
+  /food/recommendations:
+    get:
+      tags: [Public content]
+      security: []
+      parameters: [{ name: language, in: query, schema: { type: string, enum: [en, hi] } }]
+      responses: { '200': { description: Cultural/culinary recommendation with weather context } }
+  /weather:
+    get:
+      tags: [Public content]
+      security: []
+      parameters: [{ name: latitude, in: query, schema: { type: number } }, { name: longitude, in: query, schema: { type: number } }]
+      responses: { '200': { description: Live weather or an explicit unavailable fallback } }
+  /ask-jeevant:
+    post:
+      tags: [Public content]
+      security: []
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/AskRequest' } } } }
+      responses: { '200': { description: Grounded deterministic response or configured-provider result } }
+  /trails/generate:
+    post:
+      tags: [Public content]
+      security: []
+      requestBody: { required: true, content: { application/json: { schema: { type: object } } } }
+      responses: { '200': { description: Deterministic trail recommendation } }
+  /trails/{id}:
+    get:
+      tags: [Public content]
+      security: []
+      parameters: [{ $ref: '#/components/parameters/id' }]
+      responses: { '200': { description: Stored trail }, '404': { $ref: '#/components/responses/NotFound' } }
+    delete:
+      tags: [Community and moderation]
+      security: [{ sessionCookie: [] }]
+      parameters: [{ $ref: '#/components/parameters/id' }]
+      responses: { '204': { description: Owned trail deleted }, '401': { $ref: '#/components/responses/Unauthorized' }, '404': { $ref: '#/components/responses/NotFound' } }
+  /auth/register:
+    post:
+      tags: [Authentication]
+      security: []
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/RegisterRequest' } } } }
+      responses: { '201': { description: User created and secure session cookie issued }, '409': { description: Email already exists } }
+  /auth/login:
+    post:
+      tags: [Authentication]
+      security: []
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/RegisterRequest' } } } }
+      responses: { '200': { description: Authenticated session }, '401': { $ref: '#/components/responses/Unauthorized' } }
+  /auth/logout:
+    post:
+      tags: [Authentication]
+      security: [{ sessionCookie: [] }]
+      responses: { '200': { description: Session revoked } }
+  /auth/me:
+    get:
+      tags: [Authentication]
+      security: []
+      responses: { '200': { description: Current public user or null } }
+  /favorites:
+    get:
+      tags: [Community and moderation]
+      security: [{ sessionCookie: [] }]
+      responses: { '200': { description: User favorites } }
+    post:
+      tags: [Community and moderation]
+      security: [{ sessionCookie: [] }]
+      responses: { '201': { description: Favorite saved } }
+  /submissions:
+    post:
+      tags: [Community and moderation]
+      security: [{ sessionCookie: [] }]
+      responses: { '201': { description: Pending submission; not automatically published } }
+  /submissions/{id}:
+    get:
+      tags: [Community and moderation]
+      security: [{ sessionCookie: [] }]
+      parameters: [{ $ref: '#/components/parameters/id' }]
+      responses: { '200': { description: Submission visible to its owner or administrators } }
+    patch:
+      tags: [Community and moderation]
+      security: [{ sessionCookie: [] }]
+      parameters: [{ $ref: '#/components/parameters/id' }]
+      responses: { '200': { description: Moderation result } }
+  /orders:
+    post:
+      tags: [Community and moderation]
+      security: [{ sessionCookie: [] }]
+      responses: { '503': { description: Commerce disabled until a real provider/workflow is configured } }
+  /payments/intents:
+    post:
+      tags: [Community and moderation]
+      security: [{ sessionCookie: [] }]
+      responses: { '503': { description: Payments disabled; no fake success is generated } }
+components:
+  parameters:
+    id: { name: id, in: path, required: true, schema: { type: string } }
+  securitySchemes:
+    sessionCookie: { type: apiKey, in: cookie, name: jv_session }
+  schemas:
+    DataArray: { type: object, required: [data], properties: { data: { type: array, items: { type: object } } } }
+    RegisterRequest: { type: object, required: [email, password], properties: { email: { type: string, format: email }, password: { type: string, minLength: 10 }, displayName: { type: string } } }
+    InventoryInput: { type: object, required: [productId, quantity], properties: { productId: { type: string }, quantity: { type: integer, minimum: 0 }, reserved: { type: integer, minimum: 0 } } }
+    AskRequest: { type: object, required: [question], properties: { question: { type: string, maxLength: 1000 }, language: { type: string, enum: [en, hi] }, heritageId: { type: string }, location: { type: string }, weather: { type: object } } }
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message, requestId]
+          properties:
+            code: { type: string }
+            message: { type: string }
+            requestId: { type: string }
+  responses:
+    BadRequest: { description: Validation error, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    Unauthorized: { description: Authentication required, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    Forbidden: { description: Authorization failed, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    NotFound: { description: Record not found, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }

@@ -12,7 +12,10 @@ export async function apiRequest<T>(path: string, options?: RequestInit): Promis
     ...options,
   })
   const payload = await response.json().catch(() => ({}))
-  if (!response.ok) throw new Error(payload.error ?? 'Something went wrong.')
+  if (!response.ok) {
+    const message = typeof payload.error === 'string' ? payload.error : payload.error?.message ?? payload.message ?? 'Something went wrong.'
+    throw new Error(message)
+  }
   return payload.data as T
 }
 

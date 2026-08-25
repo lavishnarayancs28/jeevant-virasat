@@ -116,10 +116,35 @@ Demonstration entries are deliberately marked when claims need research. The app
 
 Map tiles are provided by OpenStreetMap. If tiles are unavailable, the marker list and heritage navigation remain usable.
 
-## Next production steps
+## Backend foundation
 
-1. Replace the typed seed repository with Prisma/PostgreSQL or a verified content service.
-2. Add content provenance, review status and community-edit workflows.
-3. Add authentication and move favorites/trails from local storage to user accounts.
-4. Add verified contact routing for artisans; do not publish private details by default.
-5. Add geocoding, route distance calculation and region-level moderation.
+The Express server now has a modular production foundation while retaining the existing frontend and response contracts:
+
+- `server/config` validates environment configuration and never logs secret values.
+- `server/db` provides parameterized PostgreSQL queries, forward-only migrations, and a seed command for the current Haryana dataset.
+- `server/repositories` selects PostgreSQL when `DATABASE_URL` is configured and uses an explicitly labelled in-memory development fallback otherwise.
+- `server/auth`, `server/middleware`, `server/services`, and `server/integrations` provide secure sessions, RBAC, request IDs, validation, audit logging, private livelihood records, and provider adapters.
+- `docs/openapi.yaml` documents the public, authenticated, private, moderation, and disabled-commerce endpoints.
+
+The current dataset is seeded without changing its provenance. Prototype artisans, prices, food placeholders, livelihood examples, deterministic trail recommendations, and deterministic Ask Jeevant responses remain labelled as prototype or fallback data. QR responses verify a Jeevant Virasat record only; they are not government certification, legal identity, or official approval.
+
+## Database setup
+
+Configure `DATABASE_URL` and a non-committed `SESSION_SECRET`, then run:
+
+```bash
+npm run db:migrate
+npm run db:seed
+```
+
+`npm run db:setup` runs both. Migrations are forward-only in this foundation; production schema changes must be made through reviewed migration files. Without `DATABASE_URL`, local development continues with the in-memory fallback and private writes remain process-local. Set `REQUIRE_DATABASE=true` to fail startup when PostgreSQL is unavailable.
+
+Required production variables are `DATABASE_URL`, `SESSION_SECRET`, `APP_URL`, and `FRONTEND_URL`. Set `REQUIRE_PRODUCTION_CONFIG=true` to validate all four at startup. Optional provider variables are `WEATHER_API_KEY`, `AI_API_KEY`, `STORAGE_BUCKET`, `STORAGE_ACCESS_KEY`, `STORAGE_SECRET_KEY`, `PAYMENT_SECRET_KEY`, and `EMAIL_API_KEY`. Empty provider configuration produces an explicit unavailable/disabled response; it does not fabricate live weather, AI, media, emails, payments, orders, or transactions.
+
+Authentication uses bcrypt password hashes and an HttpOnly `jv_session` cookie; roles are `VISITOR`, `USER`, `ARTISAN`, `ORGANIZATION`, `VERIFIER`, and `ADMIN`. Financial, inventory, production, sales, and expense routes require the artisan owner, an authorized organization, or an administrator. Public profiles never expose private contact or financial records.
+
+## Current API surface
+
+In addition to the original discovery routes, the server supports `/api/auth/*`, heritage/story/artisan/product CRUD for authorized roles, provenance, verification requests/reviews, `/api/food`, `/api/weather`, `/api/food/recommendations`, favorites, protected inventory and livelihood records, business-health derivation, community submissions/moderation, audit hooks, and explicit `503` responses for unconfigured commerce. See [docs/openapi.yaml](docs/openapi.yaml) for request/response details and structured errors.
+
+Render should provide `DATABASE_URL`, `SESSION_SECRET`, `APP_URL`, and `FRONTEND_URL` before enabling strict production configuration. The service still binds to Render's `PORT` on `0.0.0.0`; no deployment is performed by this change.
